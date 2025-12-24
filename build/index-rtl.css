@@ -1,0 +1,137 @@
+/*!****************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[4].use[2]!./node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[4].use[3]!./src/editor.scss ***!
+  \****************************************************************************************************************************************************************************************************************************************/
+/**
+ * The following styles get applied inside the editor only.
+ */
+.gatherpress-countdown-datetime-popover .components-datetime {
+  padding: 1rem;
+}
+.gatherpress-countdown-gatherpress-popover,
+.gatherpress-countdown-taxonomy-popover {
+  min-width: 500px;
+  max-width: 600px;
+}
+.gatherpress-countdown-gatherpress-selector,
+.gatherpress-countdown-taxonomy-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 16px;
+}
+.gatherpress-countdown-gatherpress-selector .components-form-token-field,
+.gatherpress-countdown-taxonomy-selector .components-form-token-field {
+  margin-bottom: 0;
+}
+.gatherpress-countdown-gatherpress-selector .components-base-control__label,
+.gatherpress-countdown-taxonomy-selector .components-base-control__label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  color: #1e1e1e;
+}
+.gatherpress-countdown-taxonomy-selector .gatherpress-countdown-taxonomy-label {
+  margin: 0 0 8px 0;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: #1e1e1e;
+}
+.gatherpress-countdown-taxonomy-selector .components-menu-group {
+  margin: 0;
+}
+.gatherpress-countdown-taxonomy-selector .gatherpress-countdown-taxonomy-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #ddd;
+}
+.gatherpress-countdown-taxonomy-selector .gatherpress-countdown-taxonomy-header .gatherpress-countdown-taxonomy-name {
+  font-weight: 500;
+  color: #1e1e1e;
+}
+.gatherpress-countdown-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+.gatherpress-countdown-loading p {
+  margin: 0;
+  color: #757575;
+  font-size: 0.9rem;
+}
+.gatherpress-countdown-no-events {
+  padding: 1rem;
+  text-align: center;
+}
+.gatherpress-countdown-no-events p {
+  margin: 0 0 12px 0;
+  color: #757575;
+  font-size: 0.9rem;
+}
+.gatherpress-countdown-event-sync-note {
+  margin: 0;
+  padding: 8px 12px;
+  background: #f0f6fc;
+  border-right: 2px solid #0073aa;
+  font-size: 12px;
+  color: #2c3338;
+  line-height: 1.4;
+}
+.gatherpress-countdown-event-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  background: #f0f6fc;
+  border-right: 3px solid #0073aa;
+  border-radius: 2px;
+  font-size: 11px;
+  color: #2c3338;
+  line-height: 1.4;
+  font-weight: 500;
+}
+.gatherpress-countdown-event-indicator .gatherpress-countdown-event-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+}
+.gatherpress-countdown-context-indicator {
+  background: #f0f6fc;
+  border-right-color: #2271b1;
+}
+.gatherpress-countdown-placeholder {
+  background: #f0f0f0;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+.gatherpress-countdown-placeholder p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.editor-styles-wrapper .gatherpress-countdown-wrapper {
+  margin: 1rem 0;
+}
+.editor-styles-wrapper .gatherpress-countdown-wrapper .gatherpress-countdown-event-indicator {
+  position: relative;
+  z-index: 1;
+}
+.gatherpress-countdown-info-notice {
+  margin-top: 16px !important;
+  margin-bottom: 0 !important;
+}
+.gatherpress-countdown-info-notice p {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.gatherpress-countdown-info-notice p:last-child {
+  margin-bottom: 0;
+}

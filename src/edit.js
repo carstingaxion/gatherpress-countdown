@@ -274,24 +274,22 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 			
 			const { getEntityRecords, isResolving } = select( coreStore );
 			
+			// Build the query args object with the taxonomy filter
 			const queryArgs = {
 				per_page: 1,
 				status: 'publish',
-				orderby: 'meta_value',
-				meta_key: 'gatherpress_datetime_start',
-				order: 'asc',
-				meta_query: [
-					{
-						key: 'gatherpress_datetime_start',
-						value: new Date().toISOString(),
-						compare: '>=',
-						type: 'DATETIME',
-					},
-				],
+				// orderby: 'meta_value',
+				// meta_key: 'gatherpress_datetime_start',
+				// order: 'ASC',
+
+				// Use the taxonomy slug as the key and term ID as the value
+				// [ gatherPressTaxonomy ]: [[ gatherPressTermId ]],
 			};
-			
+
+						
 			// Add taxonomy filter
 			queryArgs[ gatherPressTaxonomy ] = gatherPressTermId;
+
 			
 			const events = getEntityRecords( 'postType', 'gatherpress_event', queryArgs ) || [];
 			

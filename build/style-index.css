@@ -1,0 +1,177 @@
+/*!***************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[4].use[2]!./node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[4].use[3]!./src/style.scss ***!
+  \***************************************************************************************************************************************************************************************************************************************/
+/**
+ * The following styles get applied both on the front of your site
+ * and in the editor.
+ */
+.gatherpress-countdown-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 120px;
+}
+.gatherpress-countdown-placeholder {
+  text-align: center;
+  padding: 2rem;
+  color: #757575;
+  font-style: italic;
+}
+.gatherpress-countdown {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.gatherpress-countdown-segment {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.gatherpress-countdown-number {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.gatherpress-countdown-label {
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+  font-weight: 500;
+}
+/* Classic Style */
+.is-style-classic .gatherpress-countdown {
+  gap: 1.5rem;
+}
+.is-style-classic .gatherpress-countdown-segment {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 1.5rem 1rem;
+  border-radius: 8px;
+  min-width: 80px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.is-style-classic .gatherpress-countdown-number {
+  font-size: 2.5rem;
+  color: #1e1e1e;
+}
+.is-style-classic .gatherpress-countdown-label {
+  color: #555;
+  font-size: 0.75rem;
+}
+/* Modern Style */
+.is-style-modern .gatherpress-countdown {
+  gap: 2.5rem;
+  padding: 2rem;
+}
+.is-style-modern .gatherpress-countdown-segment {
+  position: relative;
+  padding: 1rem;
+}
+.is-style-modern .gatherpress-countdown-segment::after {
+  content: ":";
+  position: absolute;
+  right: -1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 3rem;
+  font-weight: 300;
+  opacity: 0.3;
+}
+.is-style-modern .gatherpress-countdown-segment:last-child::after {
+  content: none;
+}
+.is-style-modern .gatherpress-countdown-number {
+  font-size: 4rem;
+  font-weight: 300;
+  background: linear-gradient(135deg, currentColor 0%, currentColor 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.is-style-modern .gatherpress-countdown-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+/* Minimal Style */
+.is-style-minimal .gatherpress-countdown {
+  gap: 3rem;
+}
+.is-style-minimal .gatherpress-countdown-segment {
+  gap: 0.25rem;
+}
+.is-style-minimal .gatherpress-countdown-number {
+  font-size: 3.5rem;
+  font-weight: 200;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+.is-style-minimal .gatherpress-countdown-label {
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  opacity: 0.5;
+}
+/* Bold Style */
+.is-style-bold .gatherpress-countdown {
+  gap: 1rem;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 2rem 3rem;
+  border-radius: 16px;
+}
+.is-style-bold .gatherpress-countdown-segment {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1.5rem 1.25rem;
+  border-radius: 12px;
+  min-width: 100px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.is-style-bold .gatherpress-countdown-number {
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.is-style-bold .gatherpress-countdown-label {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+/* Responsive Design */
+@media (max-width: 768px) {
+  .gatherpress-countdown {
+    gap: 1rem !important;
+  }
+  .gatherpress-countdown-number {
+    font-size: 2rem !important;
+  }
+  .gatherpress-countdown-label {
+    font-size: 0.7rem !important;
+  }
+  .is-style-bold .gatherpress-countdown {
+    padding: 1.5rem 2rem;
+  }
+  .is-style-modern .gatherpress-countdown-segment::after {
+    font-size: 2rem;
+    right: -1rem;
+  }
+}
+@media (max-width: 480px) {
+  .gatherpress-countdown {
+    gap: 0.75rem !important;
+  }
+  .gatherpress-countdown-number {
+    font-size: 1.75rem !important;
+  }
+  .gatherpress-countdown-segment {
+    min-width: 60px !important;
+    padding: 1rem 0.75rem !important;
+  }
+}
+
+/*# sourceMappingURL=style-index.css.map*/
