@@ -8,17 +8,39 @@
  * Handles real-time countdown/countup updates on the frontend.
  * Updates all countdown timer blocks on the page every second.
  *
- * @package TelexCountdownTimer
+ * @package GatherPressCountdown
  */
 
 (function () {
   'use strict';
 
   /**
+   * Time unit conversion constants in seconds.
+   *
+   * @type {Object.<string, number>}
+   */
+  const TIME_UNITS = {
+    years: 365.25 * 24 * 60 * 60,
+    months: 30.44 * 24 * 60 * 60,
+    weeks: 7 * 24 * 60 * 60,
+    days: 24 * 60 * 60,
+    hours: 60 * 60,
+    minutes: 60,
+    seconds: 1
+  };
+
+  /**
+   * Order of time segments from largest to smallest.
+   *
+   * @type {string[]}
+   */
+  const SEGMENT_ORDER = ['years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds'];
+
+  /**
    * Calculate time difference with cascading based on selected segments.
    *
    * @param {string} targetDateTime - The target date/time in ISO format.
-   * @param {Object} segments - Object indicating which segments are shown.
+   * @param {Object} segments       - Object indicating which segments are shown.
    * @return {Object} Object containing calculated time values.
    */
   function calculateTimeDifference(targetDateTime, segments) {
@@ -26,56 +48,20 @@
     const target = new Date(targetDateTime).getTime();
     const difference = target - now;
     const absDifference = Math.abs(difference);
-
-    // Calculate remaining time in seconds
     let remainingSeconds = Math.floor(absDifference / 1000);
-
-    // Initialize result object
     const result = {
-      years: 0,
-      months: 0,
-      weeks: 0,
-      days: 0,
-      hours: 0,
-      minutes: 0,
-      seconds: 0,
       total: difference
     };
 
-    // Calculate each segment, subtracting from remainingSeconds as we go
-    if (segments.showYears) {
-      const secondsPerYear = 365.25 * 24 * 60 * 60;
-      result.years = Math.floor(remainingSeconds / secondsPerYear);
-      remainingSeconds -= result.years * secondsPerYear;
-    }
-    if (segments.showMonths) {
-      const secondsPerMonth = 30.44 * 24 * 60 * 60;
-      result.months = Math.floor(remainingSeconds / secondsPerMonth);
-      remainingSeconds -= result.months * secondsPerMonth;
-    }
-    if (segments.showWeeks) {
-      const secondsPerWeek = 7 * 24 * 60 * 60;
-      result.weeks = Math.floor(remainingSeconds / secondsPerWeek);
-      remainingSeconds -= result.weeks * secondsPerWeek;
-    }
-    if (segments.showDays) {
-      const secondsPerDay = 24 * 60 * 60;
-      result.days = Math.floor(remainingSeconds / secondsPerDay);
-      remainingSeconds -= result.days * secondsPerDay;
-    }
-    if (segments.showHours) {
-      const secondsPerHour = 60 * 60;
-      result.hours = Math.floor(remainingSeconds / secondsPerHour);
-      remainingSeconds -= result.hours * secondsPerHour;
-    }
-    if (segments.showMinutes) {
-      const secondsPerMinute = 60;
-      result.minutes = Math.floor(remainingSeconds / secondsPerMinute);
-      remainingSeconds -= result.minutes * secondsPerMinute;
-    }
-    if (segments.showSeconds) {
-      result.seconds = Math.floor(remainingSeconds);
-    }
+    // Calculate each segment in order, subtracting from remainingSeconds
+    SEGMENT_ORDER.forEach(function (segment) {
+      if (segments[segment]) {
+        result[segment] = Math.floor(remainingSeconds / TIME_UNITS[segment]);
+        remainingSeconds -= result[segment] * TIME_UNITS[segment];
+      } else {
+        result[segment] = 0;
+      }
+    });
     return result;
   }
 
@@ -90,6 +76,36 @@
   }
 
   /**
+   * Get segment configuration from timer element dataset.
+   *
+   * @param {HTMLElement} timerElement - The countdown timer DOM element.
+   * @return {Object} Segment configuration object.
+   */
+  function getSegmentConfig(timerElement) {
+    return {
+      years: timerElement.dataset.showYears === '1',
+      months: timerElement.dataset.showMonths === '1',
+      weeks: timerElement.dataset.showWeeks === '1',
+      days: timerElement.dataset.showDays === '1',
+      hours: timerElement.dataset.showHours === '1',
+      minutes: timerElement.dataset.showMinutes === '1',
+      seconds: timerElement.dataset.showSeconds === '1'
+    };
+  }
+
+  /**
+   * Get enabled segments in order.
+   *
+   * @param {Object} segmentConfig - Segment configuration object.
+   * @return {string[]} Array of enabled segment names.
+   */
+  function getEnabledSegments(segmentConfig) {
+    return SEGMENT_ORDER.filter(function (segment) {
+      return segmentConfig[segment];
+    });
+  }
+
+  /**
    * Update a single countdown timer element.
    *
    * @param {HTMLElement} timerElement - The countdown timer DOM element.
@@ -100,50 +116,16 @@
     if (!targetDateTime) {
       return;
     }
-    const segments = {
-      showYears: timerElement.dataset.showYears === '1',
-      showMonths: timerElement.dataset.showMonths === '1',
-      showWeeks: timerElement.dataset.showWeeks === '1',
-      showDays: timerElement.dataset.showDays === '1',
-      showHours: timerElement.dataset.showHours === '1',
-      showMinutes: timerElement.dataset.showMinutes === '1',
-      showSeconds: timerElement.dataset.showSeconds === '1'
-    };
-    const timeLeft = calculateTimeDifference(targetDateTime, segments);
+    const segmentConfig = getSegmentConfig(timerElement);
+    const timeLeft = calculateTimeDifference(targetDateTime, segmentConfig);
     const segmentElements = timerElement.querySelectorAll('.gatherpress-countdown-segment');
     if (segmentElements.length === 0) {
       return;
     }
-    const values = [];
-    const segmentTypes = [];
-    if (segments.showYears) {
-      values.push(timeLeft.years);
-      segmentTypes.push('years');
-    }
-    if (segments.showMonths) {
-      values.push(timeLeft.months);
-      segmentTypes.push('months');
-    }
-    if (segments.showWeeks) {
-      values.push(timeLeft.weeks);
-      segmentTypes.push('weeks');
-    }
-    if (segments.showDays) {
-      values.push(timeLeft.days);
-      segmentTypes.push('days');
-    }
-    if (segments.showHours) {
-      values.push(timeLeft.hours);
-      segmentTypes.push('hours');
-    }
-    if (segments.showMinutes) {
-      values.push(timeLeft.minutes);
-      segmentTypes.push('minutes');
-    }
-    if (segments.showSeconds) {
-      values.push(timeLeft.seconds);
-      segmentTypes.push('seconds');
-    }
+    const enabledSegments = getEnabledSegments(segmentConfig);
+    const values = enabledSegments.map(function (segment) {
+      return timeLeft[segment];
+    });
 
     // Find the first non-zero segment from the start
     let firstNonZeroIndex = -1;
@@ -153,7 +135,7 @@
         break;
       }
     }
-    segmentElements.forEach((segment, index) => {
+    segmentElements.forEach(function (segment, index) {
       if (index >= values.length) {
         return;
       }
