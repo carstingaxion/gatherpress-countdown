@@ -15,19 +15,70 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$target_date_time      = $attributes['targetDateTime'] ?? '';
-$gatherpress_event_id = $attributes['gatherPressEventId'] ?? 0;
-$show_labels           = $attributes['showLabels'] ?? true;
-$show_years            = $attributes['showYears'] ?? false;
-$show_months           = $attributes['showMonths'] ?? false;
-$show_weeks            = $attributes['showWeeks'] ?? false;
-$show_days             = $attributes['showDays'] ?? true;
-$show_hours            = $attributes['showHours'] ?? true;
-$show_minutes          = $attributes['showMinutes'] ?? true;
-$show_seconds          = $attributes['showSeconds'] ?? true;
-$mode                  = $attributes['mode'] ?? 'countdown';
+$target_date_time       = $attributes['targetDateTime'] ?? '';
+$gatherpress_event_id   = $attributes['gatherPressEventId'] ?? 0;
+$gatherpress_taxonomy   = $attributes['gatherPressTaxonomy'] ?? '';
+$gatherpress_term_id    = $attributes['gatherPressTermId'] ?? 0;
+$show_labels            = $attributes['showLabels'] ?? true;
+$show_years             = $attributes['showYears'] ?? false;
+$show_months            = $attributes['showMonths'] ?? false;
+$show_weeks             = $attributes['showWeeks'] ?? false;
+$show_days              = $attributes['showDays'] ?? true;
+$show_hours             = $attributes['showHours'] ?? true;
+$show_minutes           = $attributes['showMinutes'] ?? true;
+$show_seconds           = $attributes['showSeconds'] ?? true;
+$mode                   = $attributes['mode'] ?? 'countdown';
 
-// If a GatherPress event is selected, fetch its date
+// Check if we have context (from Query Loop or single post)
+$context_post_id = $block->context['postId'] ?? get_the_ID();
+$context_post_type = $block->context['postType'] ?? get_post_type( $context_post_id );
+
+// If we're in a GatherPress event context and no date is manually set
+if ( $context_post_type === 'gatherpress_event' && empty( $target_date_time ) && empty( $gatherpress_event_id ) && empty( $gatherpress_term_id ) ) {
+	$context_event_date = get_post_meta( $context_post_id, 'gatherpress_datetime_start', true );
+	if ( ! empty( $context_event_date ) ) {
+		$target_date_time = $context_event_date;
+	}
+}
+
+// If a taxonomy term is selected, fetch the next event from that term
+if ( $gatherpress_term_id > 0 && ! empty( $gatherpress_taxonomy ) ) {
+	$next_event_args = array(
+		'post_type'      => 'gatherpress_event',
+		'post_status'    => 'publish',
+		'posts_per_page' => 1,
+		'orderby'        => 'meta_value',
+		'meta_key'       => 'gatherpress_datetime_start',
+		'order'          => 'ASC',
+		'tax_query'      => array(
+			array(
+				'taxonomy' => $gatherpress_taxonomy,
+				'field'    => 'term_id',
+				'terms'    => $gatherpress_term_id,
+			),
+		),
+		'meta_query'     => array(
+			array(
+				'key'     => 'gatherpress_datetime_start',
+				'value'   => current_time( 'mysql' ),
+				'compare' => '>=',
+				'type'    => 'DATETIME',
+			),
+		),
+	);
+	
+	$next_events = get_posts( $next_event_args );
+	
+	if ( ! empty( $next_events ) ) {
+		$next_event = $next_events[0];
+		$event_date = get_post_meta( $next_event->ID, 'gatherpress_datetime_start', true );
+		if ( ! empty( $event_date ) ) {
+			$target_date_time = $event_date;
+		}
+	}
+}
+
+// If a GatherPress event is explicitly selected, fetch its date (overrides context and taxonomy)
 if ( $gatherpress_event_id > 0 ) {
 	$event_date = get_post_meta( $gatherpress_event_id, 'gatherpress_datetime_start', true );
 	if ( ! empty( $event_date ) ) {
@@ -61,14 +112,14 @@ if ( ! function_exists('telex_countdown_get_segment_label') ) {
 if ( empty( $target_date_time ) ) {
 	$wrapper_attributes = get_block_wrapper_attributes( 
 		array( 
-			'class' => 'countdown-timer-wrapper',
+			'class' => 'gatherpress-countdown-wrapper',
 		) 
 	);
 	
 	echo sprintf(
-		'<div %1$s><div class="countdown-timer-placeholder"><p>%2$s</p></div></div>',
+		'<div %1$s><div class="gatherpress-countdown-placeholder"><p>%2$s</p></div></div>',
 		$wrapper_attributes,
-		esc_html__( 'Please configure the countdown timer in the editor.', 'countdown-timer' )
+		esc_html__( 'Please configure the countdown timer in the editor.', 'gatherpress-countdown' )
 	);
 	return;
 }
@@ -79,89 +130,55 @@ $target     = strtotime( $target_date_time );
 $difference = $target - $now;
 $abs_diff   = abs( $difference );
 
-// Calculate total units.
-$total_seconds = floor( $abs_diff );
-$total_minutes = floor( $total_seconds / 60 );
-$total_hours   = floor( $total_minutes / 60 );
-$total_days    = floor( $total_hours / 24 );
-$total_weeks   = floor( $total_days / 7 );
-$total_months  = floor( $total_days / 30.44 );
-$total_years   = floor( $total_days / 365.25 );
+// Calculate remaining time in seconds
+$remaining_seconds = floor( $abs_diff );
 
-// Calculate cascading values.
-$remaining_seconds = $total_seconds;
-
+// Calculate each segment, subtracting from remainingSeconds as we go
 $years = 0;
 if ( $show_years ) {
-	$years = $total_years;
-	$remaining_seconds -= $total_years * 365.25 * 24 * 60 * 60;
+	$seconds_per_year = 365.25 * 24 * 60 * 60;
+	$years = floor( $remaining_seconds / $seconds_per_year );
+	$remaining_seconds -= $years * $seconds_per_year;
 }
 
 $months = 0;
 if ( $show_months ) {
-	$months = $show_years 
-		? floor( $remaining_seconds / ( 30.44 * 24 * 60 * 60 ) ) % 12
-		: $total_months;
-	if ( $show_years ) {
-		$remaining_seconds -= $months * 30.44 * 24 * 60 * 60;
-	} else {
-		$remaining_seconds -= $total_months * 30.44 * 24 * 60 * 60;
-	}
+	$seconds_per_month = 30.44 * 24 * 60 * 60;
+	$months = floor( $remaining_seconds / $seconds_per_month );
+	$remaining_seconds -= $months * $seconds_per_month;
 }
 
 $weeks = 0;
 if ( $show_weeks ) {
-	$weeks = ( $show_years || $show_months )
-		? floor( $remaining_seconds / ( 7 * 24 * 60 * 60 ) ) % 4
-		: $total_weeks;
-	if ( $show_years || $show_months ) {
-		$remaining_seconds -= $weeks * 7 * 24 * 60 * 60;
-	} else {
-		$remaining_seconds -= $total_weeks * 7 * 24 * 60 * 60;
-	}
+	$seconds_per_week = 7 * 24 * 60 * 60;
+	$weeks = floor( $remaining_seconds / $seconds_per_week );
+	$remaining_seconds -= $weeks * $seconds_per_week;
 }
 
 $days = 0;
 if ( $show_days ) {
-	$days = ( $show_years || $show_months || $show_weeks )
-		? floor( $remaining_seconds / ( 24 * 60 * 60 ) ) % 7
-		: $total_days;
-	if ( $show_years || $show_months || $show_weeks ) {
-		$remaining_seconds -= $days * 24 * 60 * 60;
-	} else {
-		$remaining_seconds -= $total_days * 24 * 60 * 60;
-	}
+	$seconds_per_day = 24 * 60 * 60;
+	$days = floor( $remaining_seconds / $seconds_per_day );
+	$remaining_seconds -= $days * $seconds_per_day;
 }
 
 $hours = 0;
 if ( $show_hours ) {
-	$hours = ( $show_years || $show_months || $show_weeks || $show_days )
-		? floor( $remaining_seconds / ( 60 * 60 ) ) % 24
-		: $total_hours;
-	if ( $show_years || $show_months || $show_weeks || $show_days ) {
-		$remaining_seconds -= $hours * 60 * 60;
-	} else {
-		$remaining_seconds -= $total_hours * 60 * 60;
-	}
+	$seconds_per_hour = 60 * 60;
+	$hours = floor( $remaining_seconds / $seconds_per_hour );
+	$remaining_seconds -= $hours * $seconds_per_hour;
 }
 
 $minutes = 0;
 if ( $show_minutes ) {
-	$minutes = ( $show_years || $show_months || $show_weeks || $show_days || $show_hours )
-		? floor( $remaining_seconds / 60 ) % 60
-		: $total_minutes;
-	if ( $show_years || $show_months || $show_weeks || $show_days || $show_hours ) {
-		$remaining_seconds -= $minutes * 60;
-	} else {
-		$remaining_seconds -= $total_minutes * 60;
-	}
+	$seconds_per_minute = 60;
+	$minutes = floor( $remaining_seconds / $seconds_per_minute );
+	$remaining_seconds -= $minutes * $seconds_per_minute;
 }
 
 $seconds = 0;
 if ( $show_seconds ) {
-	$seconds = ( $show_years || $show_months || $show_weeks || $show_days || $show_hours || $show_minutes )
-		? floor( $remaining_seconds ) % 60
-		: $total_seconds;
+	$seconds = floor( $remaining_seconds );
 }
 
 // Determine mode based on whether target is in past or future.
@@ -169,7 +186,7 @@ $actual_mode = $difference < 0 ? 'countup' : 'countdown';
 
 $wrapper_attributes = get_block_wrapper_attributes( 
 	array( 
-		'class' => 'countdown-timer-wrapper',
+		'class' => 'gatherpress-countdown-wrapper',
 	) 
 );
 
@@ -228,16 +245,16 @@ if ( $show_seconds ) {
 // If no segments are selected, show placeholder.
 if ( empty( $segments ) ) {
 	echo sprintf(
-		'<div %1$s><div class="countdown-timer-placeholder"><p>%2$s</p></div></div>',
+		'<div %1$s><div class="gatherpress-countdown-placeholder"><p>%2$s</p></div></div>',
 		$wrapper_attributes,
-		esc_html__( 'Please select at least one time segment to display.', 'countdown-timer' )
+		esc_html__( 'Please select at least one time segment to display.', 'gatherpress-countdown' )
 	);
 	return;
 }
 
 // Build timer HTML.
 $timer_html = sprintf(
-	'<div class="countdown-timer" data-target="%s" data-mode="%s" data-show-years="%s" data-show-months="%s" data-show-weeks="%s" data-show-days="%s" data-show-hours="%s" data-show-minutes="%s" data-show-seconds="%s">',
+	'<div class="gatherpress-countdown" data-target="%s" data-mode="%s" data-show-years="%s" data-show-months="%s" data-show-weeks="%s" data-show-days="%s" data-show-hours="%s" data-show-minutes="%s" data-show-seconds="%s">',
 	esc_attr( $target_date_time ),
 	esc_attr( $actual_mode ),
 	esc_attr( $show_years ? '1' : '0' ),
@@ -250,15 +267,15 @@ $timer_html = sprintf(
 );
 
 foreach ( $segments as $segment ) {
-	$timer_html .= '<div class="countdown-timer-segment">';
+	$timer_html .= '<div class="gatherpress-countdown-segment">';
 	$timer_html .= sprintf(
-		'<span class="countdown-timer-number">%s</span>',
+		'<span class="gatherpress-countdown-number">%s</span>',
 		esc_html( str_pad( (string) $segment['value'], 2, '0', STR_PAD_LEFT ) )
 	);
 	
 	if ( $show_labels ) {
 		$timer_html .= sprintf(
-			'<span class="countdown-timer-label">%s</span>',
+			'<span class="gatherpress-countdown-label">%s</span>',
 			esc_html( $segment['label'] )
 		);
 	}

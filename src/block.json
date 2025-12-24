@@ -1,7 +1,7 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "telex/block-countdown-timer",
+	"name": "telex/block-gatherpress-countdown",
 	"version": "0.1.0",
 	"title": "Countdown Timer",
 	"category": "widgets",
@@ -20,6 +20,14 @@
 			"default": ""
 		},
 		"gatherPressEventId": {
+			"type": "number",
+			"default": 0
+		},
+		"gatherPressTaxonomy": {
+			"type": "string",
+			"default": ""
+		},
+		"gatherPressTermId": {
 			"type": "number",
 			"default": 0
 		},
@@ -61,6 +69,7 @@
 			"default": true
 		}
 	},
+	"usesContext": ["postId", "postType", "queryId"],
 	"supports": {
 		"html": false,
 		"align": ["wide", "full"],
@@ -81,7 +90,7 @@
 			"blockGap": true
 		}
 	},
-	"textdomain": "countdown-timer",
+	"textdomain": "gatherpress-countdown",
 	"editorScript": "file:./index.js",
 	"editorStyle": "file:./index.css",
 	"style": "file:./style-index.css",

@@ -1,5 +1,5 @@
 {
-    "name": "block-countdown-timer",
+    "name": "block-gatherpress-countdown",
     "version": "0.1.0",
     "description": "Display a countdown timer to a target date or count up from a past date with real-time updates.",
     "author": "telex block authoring tool",

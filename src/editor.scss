@@ -2,29 +2,67 @@
  * The following styles get applied inside the editor only.
  */
 
-.countdown-timer-datetime-popover {
+.gatherpress-countdown-datetime-popover {
 	.components-datetime {
 		padding: 1rem;
 	}
 }
 
-.countdown-timer-gatherpress-popover {
-	min-width: 400px;
-	max-width: 500px;
-	padding: 1rem;
+.gatherpress-countdown-gatherpress-popover,
+.gatherpress-countdown-taxonomy-popover {
+	min-width: 500px;
+	max-width: 600px;
 }
 
-.countdown-timer-gatherpress-selector {
+.gatherpress-countdown-gatherpress-selector,
+.gatherpress-countdown-taxonomy-selector {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
+	padding: 16px;
 
 	.components-form-token-field {
 		margin-bottom: 0;
 	}
+
+	.components-base-control__label {
+		font-size: 11px;
+		font-weight: 500;
+		text-transform: uppercase;
+		margin-bottom: 8px;
+		color: #1e1e1e;
+	}
 }
 
-.countdown-timer-loading {
+.gatherpress-countdown-taxonomy-selector {
+	.gatherpress-countdown-taxonomy-label {
+		margin: 0 0 8px 0;
+		font-size: 11px;
+		font-weight: 500;
+		text-transform: uppercase;
+		color: #1e1e1e;
+	}
+
+	.components-menu-group {
+		margin: 0;
+	}
+
+	.gatherpress-countdown-taxonomy-header {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 12px;
+		padding-bottom: 12px;
+		border-bottom: 1px solid #ddd;
+
+		.gatherpress-countdown-taxonomy-name {
+			font-weight: 500;
+			color: #1e1e1e;
+		}
+	}
+}
+
+.gatherpress-countdown-loading {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -38,18 +76,18 @@
 	}
 }
 
-.countdown-timer-no-events {
+.gatherpress-countdown-no-events {
 	padding: 1rem;
 	text-align: center;
 
 	p {
-		margin: 0;
+		margin: 0 0 12px 0;
 		color: #757575;
 		font-size: 0.9rem;
 	}
 }
 
-.countdown-timer-event-sync-note {
+.gatherpress-countdown-event-sync-note {
 	margin: 0;
 	padding: 8px 12px;
 	background: #f0f6fc;
@@ -59,27 +97,33 @@
 	line-height: 1.4;
 }
 
-.countdown-timer-event-indicator {
-	display: flex;
+.gatherpress-countdown-event-indicator {
+	display: inline-flex;
 	align-items: center;
 	gap: 6px;
-	margin: 0 0 12px 0;
+	margin-bottom: 12px;
 	padding: 6px 10px;
 	background: #f0f6fc;
 	border-left: 3px solid #0073aa;
-	font-size: 12px;
+	border-radius: 2px;
+	font-size: 11px;
 	color: #2c3338;
 	line-height: 1.4;
 	font-weight: 500;
 
-	.countdown-timer-event-badge {
+	.gatherpress-countdown-event-badge {
 		display: inline-flex;
 		align-items: center;
 		font-size: 14px;
 	}
 }
 
-.countdown-timer-placeholder {
+.gatherpress-countdown-context-indicator {
+	background: #f0f6fc;
+	border-left-color: #2271b1;
+}
+
+.gatherpress-countdown-placeholder {
 	background: #f0f0f0;
 	border: 2px dashed #ccc;
 	border-radius: 8px;
@@ -92,12 +136,18 @@
 }
 
 .editor-styles-wrapper {
-	.countdown-timer-wrapper {
+	.gatherpress-countdown-wrapper {
 		margin: 1rem 0;
+		
+		.gatherpress-countdown-event-indicator {
+			// Position notice above the countdown, not inside it
+			position: relative;
+			z-index: 1;
+		}
 	}
 }
 
-.countdown-timer-info-notice {
+.gatherpress-countdown-info-notice {
 	margin-top: 16px !important;
 	margin-bottom: 0 !important;
 

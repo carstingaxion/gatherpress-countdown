@@ -1,17 +1,19 @@
 <?php
 /**
- * Plugin Name:       Countdown Timer
+ * Plugin Name:       GatherPress Countdown
  * Description:       A powerful countdown timer block with real-time updates, multiple styles, and theme.json integration.
  * Version:           0.1.0
  * Requires at least: 6.4
  * Requires PHP:      7.4
- * Author:            WordPress Telex
+ * Author:            cb + WordPress Telex
  * License:           GPLv2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       countdown-timer
+ * Text Domain:       gatherpress-countdown
  *
- * @package TelexCountdownTimer
+ * @package GatherPressCountdown
  */
+
+namespace GatherPress\Countdown;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -24,11 +26,11 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @since 0.1.0
  */
-final class Telex_Countdown_Timer_Block {
+final class Plugin {
 	/**
 	 * Single instance of the class.
 	 *
-	 * @var Telex_Countdown_Timer_Block|null
+	 * @var Plugin|null
 	 */
 	private static $instance = null;
 
@@ -37,7 +39,7 @@ final class Telex_Countdown_Timer_Block {
 	 *
 	 * @var string
 	 */
-	private const BLOCK_NAME = 'telex/block-countdown-timer';
+	private const BLOCK_NAME = 'gatherpress/countdown';
 
 	/**
 	 * Plugin directory path.
@@ -56,9 +58,9 @@ final class Telex_Countdown_Timer_Block {
 	/**
 	 * Get the singleton instance.
 	 *
-	 * @return Telex_Countdown_Timer_Block The singleton instance.
+	 * @return Plugin The singleton instance.
 	 */
-	public static function get_instance(): Telex_Countdown_Timer_Block {
+	public static function get_instance(): Plugin {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
@@ -75,21 +77,6 @@ final class Telex_Countdown_Timer_Block {
 		add_action( 'init', array( $this, 'register_block' ) );
 	}
 
-	/**
-	 * Prevent cloning of the instance.
-	 *
-	 * @return void
-	 */
-	private function __clone() {}
-
-	/**
-	 * Prevent unserialization of the instance.
-	 *
-	 * @return void
-	 */
-	public function __wakeup() {
-		throw new Exception( 'Cannot unserialize singleton' );
-	}
 
 	/**
 	 * Register the countdown timer block.
@@ -117,19 +104,19 @@ final class Telex_Countdown_Timer_Block {
 		$styles = array(
 			array(
 				'name'  => 'classic',
-				'label' => __( 'Classic', 'countdown-timer' ),
+				'label' => __( 'Classic', 'gatherpress-countdown' ),
 			),
 			array(
 				'name'  => 'modern',
-				'label' => __( 'Modern', 'countdown-timer' ),
+				'label' => __( 'Modern', 'gatherpress-countdown' ),
 			),
 			array(
 				'name'  => 'minimal',
-				'label' => __( 'Minimal', 'countdown-timer' ),
+				'label' => __( 'Minimal', 'gatherpress-countdown' ),
 			),
 			array(
 				'name'  => 'bold',
-				'label' => __( 'Bold', 'countdown-timer' ),
+				'label' => __( 'Bold', 'gatherpress-countdown' ),
 			),
 		);
 
@@ -141,13 +128,4 @@ final class Telex_Countdown_Timer_Block {
 		}
 	}
 }
-
-/**
- * Initialize the countdown timer block singleton.
- *
- * @return void
- */
-function telex_countdown_timer_init(): void {
-	Telex_Countdown_Timer_Block::get_instance();
-}
-add_action( 'plugins_loaded', 'telex_countdown_timer_init' );
+Plugin::get_instance();

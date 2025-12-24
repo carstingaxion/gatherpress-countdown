@@ -22,7 +22,9 @@ import {
 	DateTimePicker,
 	Notice,
 	FormTokenField,
-	Spinner
+	Spinner,
+	MenuGroup,
+	MenuItem
 } from '@wordpress/components';
 
 import { useState, useEffect } from '@wordpress/element';
@@ -64,14 +66,8 @@ function calculateTimeDifference( targetDateTime, segments ) {
 	const difference = target - now;
 	const absDifference = Math.abs( difference );
 
-	// Calculate total units
-	const totalSeconds = Math.floor( absDifference / 1000 );
-	const totalMinutes = Math.floor( totalSeconds / 60 );
-	const totalHours = Math.floor( totalMinutes / 60 );
-	const totalDays = Math.floor( totalHours / 24 );
-	const totalWeeks = Math.floor( totalDays / 7 );
-	const totalMonths = Math.floor( totalDays / 30.44 );
-	const totalYears = Math.floor( totalDays / 365.25 );
+	// Calculate remaining time in seconds
+	let remainingSeconds = Math.floor( absDifference / 1000 );
 
 	// Initialize result object
 	const result = {
@@ -85,79 +81,45 @@ function calculateTimeDifference( targetDateTime, segments ) {
 		total: difference,
 	};
 
-	// Calculate cascading values based on selected segments
-	let remainingSeconds = totalSeconds;
-
+	// Calculate each segment, subtracting from remainingSeconds as we go
 	if ( segments.showYears ) {
-		result.years = totalYears;
-		remainingSeconds -= totalYears * 365.25 * 24 * 60 * 60;
+		const secondsPerYear = 365.25 * 24 * 60 * 60;
+		result.years = Math.floor( remainingSeconds / secondsPerYear );
+		remainingSeconds -= result.years * secondsPerYear;
 	}
 
 	if ( segments.showMonths ) {
-		const monthsToShow = segments.showYears 
-			? Math.floor( remainingSeconds / ( 30.44 * 24 * 60 * 60 ) ) % 12
-			: totalMonths;
-		result.months = monthsToShow;
-		if ( segments.showYears ) {
-			remainingSeconds -= monthsToShow * 30.44 * 24 * 60 * 60;
-		} else {
-			remainingSeconds -= totalMonths * 30.44 * 24 * 60 * 60;
-		}
+		const secondsPerMonth = 30.44 * 24 * 60 * 60;
+		result.months = Math.floor( remainingSeconds / secondsPerMonth );
+		remainingSeconds -= result.months * secondsPerMonth;
 	}
 
 	if ( segments.showWeeks ) {
-		const weeksToShow = ( segments.showYears || segments.showMonths )
-			? Math.floor( remainingSeconds / ( 7 * 24 * 60 * 60 ) ) % 4
-			: totalWeeks;
-		result.weeks = weeksToShow;
-		if ( segments.showYears || segments.showMonths ) {
-			remainingSeconds -= weeksToShow * 7 * 24 * 60 * 60;
-		} else {
-			remainingSeconds -= totalWeeks * 7 * 24 * 60 * 60;
-		}
+		const secondsPerWeek = 7 * 24 * 60 * 60;
+		result.weeks = Math.floor( remainingSeconds / secondsPerWeek );
+		remainingSeconds -= result.weeks * secondsPerWeek;
 	}
 
 	if ( segments.showDays ) {
-		const daysToShow = ( segments.showYears || segments.showMonths || segments.showWeeks )
-			? Math.floor( remainingSeconds / ( 24 * 60 * 60 ) ) % 7
-			: totalDays;
-		result.days = daysToShow;
-		if ( segments.showYears || segments.showMonths || segments.showWeeks ) {
-			remainingSeconds -= daysToShow * 24 * 60 * 60;
-		} else {
-			remainingSeconds -= totalDays * 24 * 60 * 60;
-		}
+		const secondsPerDay = 24 * 60 * 60;
+		result.days = Math.floor( remainingSeconds / secondsPerDay );
+		remainingSeconds -= result.days * secondsPerDay;
 	}
 
 	if ( segments.showHours ) {
-		const hoursToShow = ( segments.showYears || segments.showMonths || segments.showWeeks || segments.showDays )
-			? Math.floor( remainingSeconds / ( 60 * 60 ) ) % 24
-			: totalHours;
-		result.hours = hoursToShow;
-		if ( segments.showYears || segments.showMonths || segments.showWeeks || segments.showDays ) {
-			remainingSeconds -= hoursToShow * 60 * 60;
-		} else {
-			remainingSeconds -= totalHours * 60 * 60;
-		}
+		const secondsPerHour = 60 * 60;
+		result.hours = Math.floor( remainingSeconds / secondsPerHour );
+		remainingSeconds -= result.hours * secondsPerHour;
 	}
 
 	if ( segments.showMinutes ) {
-		const minutesToShow = ( segments.showYears || segments.showMonths || segments.showWeeks || segments.showDays || segments.showHours )
-			? Math.floor( remainingSeconds / 60 ) % 60
-			: totalMinutes;
-		result.minutes = minutesToShow;
-		if ( segments.showYears || segments.showMonths || segments.showWeeks || segments.showDays || segments.showHours ) {
-			remainingSeconds -= minutesToShow * 60;
-		} else {
-			remainingSeconds -= totalMinutes * 60;
-		}
+		const secondsPerMinute = 60;
+		result.minutes = Math.floor( remainingSeconds / secondsPerMinute );
+		remainingSeconds -= result.minutes * secondsPerMinute;
 	}
 
 	if ( segments.showSeconds ) {
-		const secondsToShow = ( segments.showYears || segments.showMonths || segments.showWeeks || segments.showDays || segments.showHours || segments.showMinutes )
-			? Math.floor( remainingSeconds ) % 60
-			: totalSeconds;
-		result.seconds = secondsToShow;
+		result.seconds = Math.floor( remainingSeconds );
 	}
 
 	return result;
@@ -203,12 +165,15 @@ function getSegmentLabel( type, value ) {
  * @param {Object}   props.attributes    - Block attributes.
  * @param {Function} props.setAttributes - Function to set block attributes.
  * @param {string}   props.clientId      - Block client ID.
+ * @param {Object}   props.context       - Block context.
  * @return {Element} Element to render.
  */
-export default function Edit( { attributes, setAttributes, clientId } ) {
+export default function Edit( { attributes, setAttributes, clientId, context } ) {
 	const { 
 		targetDateTime, 
 		gatherPressEventId,
+		gatherPressTaxonomy,
+		gatherPressTermId,
 		mode, 
 		showLabels,
 		showYears,
@@ -232,6 +197,7 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 	
 	const [ timeLeft, setTimeLeft ] = useState( calculateTimeDifference( targetDateTime, segmentConfig ) );
 	const [ selectedEventTokens, setSelectedEventTokens ] = useState( [] );
+	const [ selectedTermTokens, setSelectedTermTokens ] = useState( [] );
 	const { updateBlockAttributes } = useDispatch( 'core/block-editor' );
 
 	// Get WordPress date and time format settings
@@ -239,6 +205,107 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 	const dateFormat = dateSettings.formats.date;
 	const timeFormat = dateSettings.formats.time;
 	const dateTimeFormat = `${dateFormat} ${timeFormat}`;
+
+	// Get context post ID and type
+	const contextPostId = context?.postId;
+	const contextPostType = context?.postType;
+
+	// Check if we're in a GatherPress event context
+	const isEventContext = contextPostType === 'gatherpress_event';
+
+	// Get the current post's event date if in event context
+	const contextEventDate = useSelect(
+		( select ) => {
+			if ( ! isEventContext || ! contextPostId ) {
+				return null;
+			}
+			
+			const { getEntityRecord } = select( coreStore );
+			const post = getEntityRecord( 'postType', 'gatherpress_event', contextPostId );
+			return post?.meta?.gatherpress_datetime_start || null;
+		},
+		[ isEventContext, contextPostId ]
+	);
+
+	// Fetch GatherPress taxonomies
+	const { taxonomies, isLoadingTaxonomies } = useSelect( ( select ) => {
+		const { getTaxonomies, isResolving } = select( coreStore );
+		
+		const allTaxonomies = getTaxonomies( { per_page: -1 } ) || [];
+		const eventTaxonomies = allTaxonomies.filter( 
+			tax => tax.types && tax.types.includes( 'gatherpress_event' )
+		);
+		
+		return {
+			taxonomies: eventTaxonomies,
+			isLoadingTaxonomies: isResolving( 'getTaxonomies', [ { per_page: -1 } ] ),
+		};
+	}, [] );
+
+	// Fetch terms for the selected taxonomy
+	const { terms, isLoadingTerms } = useSelect( 
+		( select ) => {
+			if ( ! gatherPressTaxonomy ) {
+				return { terms: [], isLoadingTerms: false };
+			}
+			
+			const { getEntityRecords, isResolving } = select( coreStore );
+			
+			return {
+				terms: getEntityRecords( 'taxonomy', gatherPressTaxonomy, {
+					per_page: 100,
+				} ) || [],
+				isLoadingTerms: isResolving( 'getEntityRecords', [
+					'taxonomy',
+					gatherPressTaxonomy,
+					{ per_page: 100 },
+				] ),
+			};
+		},
+		[ gatherPressTaxonomy ]
+	);
+
+	// Fetch the next event from the selected term
+	const { nextEventFromTerm, isLoadingNextEvent } = useSelect(
+		( select ) => {
+			if ( ! gatherPressTaxonomy || ! gatherPressTermId ) {
+				return { nextEventFromTerm: null, isLoadingNextEvent: false };
+			}
+			
+			const { getEntityRecords, isResolving } = select( coreStore );
+			
+			const queryArgs = {
+				per_page: 1,
+				status: 'publish',
+				orderby: 'meta_value',
+				meta_key: 'gatherpress_datetime_start',
+				order: 'asc',
+				meta_query: [
+					{
+						key: 'gatherpress_datetime_start',
+						value: new Date().toISOString(),
+						compare: '>=',
+						type: 'DATETIME',
+					},
+				],
+			};
+			
+			// Add taxonomy filter
+			queryArgs[ gatherPressTaxonomy ] = gatherPressTermId;
+			
+			const events = getEntityRecords( 'postType', 'gatherpress_event', queryArgs ) || [];
+			
+			return {
+				nextEventFromTerm: events.length > 0 ? events[0] : null,
+				isLoadingNextEvent: isResolving( 'getEntityRecords', [
+					'postType',
+					'gatherpress_event',
+					queryArgs,
+				] ),
+			};
+		},
+		[ gatherPressTaxonomy, gatherPressTermId ]
+	);
 
 	// Fetch GatherPress events using core data store
 	const { events, isLoadingEvents } = useSelect( ( select ) => {
@@ -277,6 +344,16 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 		[ gatherPressEventId ]
 	);
 
+	// Auto-sync with context event date when in event context
+	useEffect( () => {
+		if ( isEventContext && contextEventDate ) {
+			// Only auto-sync if no manual date or event is selected
+			if ( ! targetDateTime && ! gatherPressEventId && ! gatherPressTermId ) {
+				setAttributes( { targetDateTime: contextEventDate } );
+			}
+		}
+	}, [ isEventContext, contextEventDate, targetDateTime, gatherPressEventId, gatherPressTermId ] );
+
 	// Update selected tokens when gatherPressEventId changes
 	useEffect( () => {
 		if ( gatherPressEventId && events.length > 0 ) {
@@ -288,6 +365,28 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 			setSelectedEventTokens( [] );
 		}
 	}, [ gatherPressEventId, events ] );
+
+	// Update selected term tokens when gatherPressTermId changes
+	useEffect( () => {
+		if ( gatherPressTermId && terms.length > 0 ) {
+			const term = terms.find( t => t.id === gatherPressTermId );
+			if ( term ) {
+				setSelectedTermTokens( [ term.name ] );
+			}
+		} else {
+			setSelectedTermTokens( [] );
+		}
+	}, [ gatherPressTermId, terms ] );
+
+	// Update target date when next event from term changes
+	useEffect( () => {
+		if ( nextEventFromTerm?.meta?.gatherpress_datetime_start ) {
+			const eventDate = nextEventFromTerm.meta.gatherpress_datetime_start;
+			if ( eventDate !== targetDateTime ) {
+				setAttributes( { targetDateTime: eventDate } );
+			}
+		}
+	}, [ nextEventFromTerm ] );
 
 	// Update target date when selected event changes
 	useEffect( () => {
@@ -327,8 +426,8 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 		if ( targetDateTime && updateBlockAttributes ) {
 			const formattedDate = dateI18n( dateTimeFormat, targetDateTime );
 			const blockName = mode === 'countdown' 
-				? __( 'Countdown to', 'countdown-timer' ) + ' ' + formattedDate
-				: __( 'Count up from', 'countdown-timer' ) + ' ' + formattedDate;
+				? __( 'Countdown to', 'gatherpress-countdown' ) + ' ' + formattedDate
+				: __( 'Count up from', 'gatherpress-countdown' ) + ' ' + formattedDate;
 			
 			updateBlockAttributes( clientId, {
 				metadata: {
@@ -339,7 +438,7 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 	}, [ targetDateTime, mode, clientId, updateBlockAttributes, dateTimeFormat ] );
 
 	const blockProps = useBlockProps( {
-		className: 'countdown-timer-wrapper',
+		className: 'gatherpress-countdown-wrapper',
 	} );
 
 	const segments = [];
@@ -415,28 +514,76 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 		if ( event ) {
 			// Set only the selected token
 			setSelectedEventTokens( [ event.title.rendered ] );
-			setAttributes( { gatherPressEventId: event.id } );
+			setAttributes( { 
+				gatherPressEventId: event.id,
+				gatherPressTaxonomy: '',
+				gatherPressTermId: 0
+			} );
+			setSelectedTermTokens( [] );
 		}
+	};
+
+	// Handle term selection from FormTokenField - only allow one selection
+	const handleTermChange = ( tokens ) => {
+		if ( tokens.length === 0 ) {
+			setSelectedTermTokens( [] );
+			setAttributes( { gatherPressTermId: 0 } );
+			return;
+		}
+
+		// Only use the most recent token (last in array)
+		const selectedToken = tokens[ tokens.length - 1 ];
+		const term = terms.find( t => t.name === selectedToken );
+		
+		if ( term ) {
+			// Set only the selected token
+			setSelectedTermTokens( [ term.name ] );
+			setAttributes( { 
+				gatherPressTermId: term.id,
+				gatherPressEventId: 0
+			} );
+			setSelectedEventTokens( [] );
+		}
+	};
+
+	// Handle taxonomy selection
+	const handleTaxonomySelect = ( taxonomy ) => {
+		setAttributes( {
+			gatherPressTaxonomy: taxonomy,
+			gatherPressTermId: 0,
+			gatherPressEventId: 0
+		} );
+		setSelectedTermTokens( [] );
+		setSelectedEventTokens( [] );
 	};
 
 	// Prepare event suggestions for FormTokenField
 	const eventSuggestions = events.map( event => event.title.rendered );
+
+	// Prepare term suggestions for FormTokenField
+	const termSuggestions = terms.map( term => term.name );
+
+	// Determine the source of the date
+	const isContextDate = isEventContext && contextEventDate && ! gatherPressEventId && ! gatherPressTermId && targetDateTime === contextEventDate;
+	const isManualDate = targetDateTime && ! gatherPressEventId && ! gatherPressTermId && ! isContextDate;
+	const isSyncedEvent = gatherPressEventId > 0;
+	const isSyncedTerm = gatherPressTermId > 0;
 
 	return (
 		<>
 			<BlockControls>
 				<ToolbarGroup>
 					<Dropdown
-						className="countdown-timer-datetime-dropdown"
-						contentClassName="countdown-timer-datetime-popover"
+						className="gatherpress-countdown-datetime-dropdown"
+						contentClassName="gatherpress-countdown-datetime-popover"
 						position="bottom center"
 						renderToggle={ ( { isOpen, onToggle } ) => (
 							<ToolbarButton
 								icon="calendar-alt"
-								label={ __( 'Select date and time', 'countdown-timer' ) }
+								label={ __( 'Select date and time', 'gatherpress-countdown' ) }
 								onClick={ onToggle }
 								aria-expanded={ isOpen }
-								isPressed={ !! targetDateTime && ! gatherPressEventId }
+								isPressed={ isManualDate }
 							/>
 						) }
 						renderContent={ () => (
@@ -445,42 +592,45 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 								onChange={ ( newDateTime ) => {
 									setAttributes( { 
 										targetDateTime: newDateTime,
-										gatherPressEventId: 0 
+										gatherPressEventId: 0,
+										gatherPressTaxonomy: '',
+										gatherPressTermId: 0
 									} );
 									setSelectedEventTokens( [] );
+									setSelectedTermTokens( [] );
 								} }
 								is12Hour={ false }
 							/>
 						) }
 					/>
 					<Dropdown
-						className="countdown-timer-gatherpress-dropdown"
-						contentClassName="countdown-timer-gatherpress-popover"
+						className="gatherpress-countdown-gatherpress-dropdown"
+						contentClassName="gatherpress-countdown-gatherpress-popover"
 						position="bottom center"
 						renderToggle={ ( { isOpen, onToggle } ) => (
 							<ToolbarButton
 								icon="awards"
-								label={ __( 'Select GatherPress event', 'countdown-timer' ) }
+								label={ __( 'Select GatherPress event', 'gatherpress-countdown' ) }
 								onClick={ onToggle }
 								aria-expanded={ isOpen }
-								isPressed={ !! gatherPressEventId }
+								isPressed={ isSyncedEvent }
 							/>
 						) }
 						renderContent={ ( { onClose } ) => (
-							<div className="countdown-timer-gatherpress-selector">
+							<div className="gatherpress-countdown-gatherpress-selector">
 								{ isLoadingEvents ? (
-									<div className="countdown-timer-loading">
+									<div className="gatherpress-countdown-loading">
 										<Spinner />
-										<p>{ __( 'Loading events...', 'countdown-timer' ) }</p>
+										<p>{ __( 'Loading events...', 'gatherpress-countdown' ) }</p>
 									</div>
 								) : events.length === 0 ? (
-									<div className="countdown-timer-no-events">
-										<p>{ __( 'No GatherPress events found.', 'countdown-timer' ) }</p>
+									<div className="gatherpress-countdown-no-events">
+										<p>{ __( 'No GatherPress events found.', 'gatherpress-countdown' ) }</p>
 									</div>
 								) : (
 									<>
 										<FormTokenField
-											label={ __( 'Select an event', 'countdown-timer' ) }
+											label={ __( 'Select an event', 'gatherpress-countdown' ) }
 											value={ selectedEventTokens }
 											suggestions={ eventSuggestions }
 											onChange={ handleEventChange }
@@ -489,9 +639,116 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 											__experimentalShowHowTo={ false }
 										/>
 										{ gatherPressEventId > 0 && (
-											<p className="countdown-timer-event-sync-note">
-												{ __( 'Date synced with event', 'countdown-timer' ) }
+											<p className="gatherpress-countdown-event-sync-note">
+												{ __( 'Date synced with event', 'gatherpress-countdown' ) }
 											</p>
+										) }
+									</>
+								) }
+							</div>
+						) }
+					/>
+					<Dropdown
+						className="gatherpress-countdown-taxonomy-dropdown"
+						contentClassName="gatherpress-countdown-taxonomy-popover"
+						position="bottom center"
+						renderToggle={ ( { isOpen, onToggle } ) => (
+							<ToolbarButton
+								icon="tag"
+								label={ __( 'Select from taxonomy', 'gatherpress-countdown' ) }
+								onClick={ onToggle }
+								aria-expanded={ isOpen }
+								isPressed={ isSyncedTerm }
+							/>
+						) }
+						renderContent={ ( { onClose } ) => (
+							<div className="gatherpress-countdown-taxonomy-selector">
+								{ isLoadingTaxonomies ? (
+									<div className="gatherpress-countdown-loading">
+										<Spinner />
+										<p>{ __( 'Loading taxonomies...', 'gatherpress-countdown' ) }</p>
+									</div>
+								) : taxonomies.length === 0 ? (
+									<div className="gatherpress-countdown-no-events">
+										<p>{ __( 'No taxonomies found for GatherPress events.', 'gatherpress-countdown' ) }</p>
+									</div>
+								) : ! gatherPressTaxonomy ? (
+									<>
+										<p className="gatherpress-countdown-taxonomy-label">{ __( 'Select a taxonomy:', 'gatherpress-countdown' ) }</p>
+										<MenuGroup>
+											{ taxonomies.map( ( tax ) => (
+												<MenuItem
+													key={ tax.slug }
+													onClick={ () => handleTaxonomySelect( tax.slug ) }
+												>
+													{ tax.name }
+												</MenuItem>
+											) ) }
+										</MenuGroup>
+									</>
+								) : (
+									<>
+										{ isLoadingTerms ? (
+											<div className="gatherpress-countdown-loading">
+												<Spinner />
+												<p>{ __( 'Loading terms...', 'gatherpress-countdown' ) }</p>
+											</div>
+										) : terms.length === 0 ? (
+											<div className="gatherpress-countdown-no-events">
+												<p>{ __( 'No terms found.', 'gatherpress-countdown' ) }</p>
+												<ToolbarButton
+													isSecondary
+													onClick={ () => setAttributes( { gatherPressTaxonomy: '' } ) }
+												>
+													{ __( 'Back to taxonomies', 'gatherpress-countdown' ) }
+												</ToolbarButton>
+											</div>
+										) : (
+											<>
+												<div className="gatherpress-countdown-taxonomy-header">
+													<ToolbarButton
+														icon="arrow-left-alt2"
+														onClick={ () => {
+															setAttributes( { 
+																gatherPressTaxonomy: '',
+																gatherPressTermId: 0
+															} );
+															setSelectedTermTokens( [] );
+														} }
+														label={ __( 'Back', 'gatherpress-countdown' ) }
+													/>
+													<span className="gatherpress-countdown-taxonomy-name">
+														{ taxonomies.find( t => t.slug === gatherPressTaxonomy )?.name }
+													</span>
+												</div>
+												<FormTokenField
+													label={ __( 'Select a term', 'gatherpress-countdown' ) }
+													value={ selectedTermTokens }
+													suggestions={ termSuggestions }
+													onChange={ handleTermChange }
+													maxSuggestions={ 10 }
+													__experimentalExpandOnFocus
+													__experimentalShowHowTo={ false }
+												/>
+												{ gatherPressTermId > 0 && (
+													<>
+														{ isLoadingNextEvent ? (
+															<div className="gatherpress-countdown-loading">
+																<Spinner />
+																<p>{ __( 'Finding next event...', 'gatherpress-countdown' ) }</p>
+															</div>
+														) : nextEventFromTerm ? (
+															<p className="gatherpress-countdown-event-sync-note">
+																{ __( 'Using next event: ', 'gatherpress-countdown' ) }{ nextEventFromTerm.title.rendered }
+															</p>
+														) : (
+															<Notice status="warning" isDismissible={ false }>
+																<p>{ __( 'No upcoming events found in this term.', 'gatherpress-countdown' ) }</p>
+															</Notice>
+														) }
+													</>
+												) }
+											</>
 										) }
 									</>
 								) }
@@ -502,51 +759,51 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 			</BlockControls>
 
 			<InspectorControls>
-				<PanelBody title={ __( 'Display Settings', 'countdown-timer' ) }>
+				<PanelBody title={ __( 'Display Settings', 'gatherpress-countdown' ) }>
 					<ToggleControl
-						label={ __( 'Show labels', 'countdown-timer' ) }
+						label={ __( 'Show labels', 'gatherpress-countdown' ) }
 						checked={ showLabels }
 						onChange={ ( value ) => setAttributes( { showLabels: value } ) }
-						help={ __( 'Display labels for time segments.', 'countdown-timer' ) }
+						help={ __( 'Display labels for time segments.', 'gatherpress-countdown' ) }
 					/>
 				</PanelBody>
-				<PanelBody title={ __( 'Time Segments', 'countdown-timer' ) } initialOpen={ false }>
+				<PanelBody title={ __( 'Time Segments', 'gatherpress-countdown' ) } initialOpen={ false }>
 					<ToggleControl
-						label={ __( 'Show years', 'countdown-timer' ) }
+						label={ __( 'Show years', 'gatherpress-countdown' ) }
 						checked={ showYears }
 						onChange={ ( value ) => setAttributes( { showYears: value } ) }
 					/>
 					<ToggleControl
-						label={ __( 'Show months', 'countdown-timer' ) }
+						label={ __( 'Show months', 'gatherpress-countdown' ) }
 						checked={ showMonths }
 						onChange={ ( value ) => setAttributes( { showMonths: value } ) }
 					/>
 					<ToggleControl
-						label={ __( 'Show weeks', 'countdown-timer' ) }
+						label={ __( 'Show weeks', 'gatherpress-countdown' ) }
 						checked={ showWeeks }
 						onChange={ ( value ) => setAttributes( { showWeeks: value } ) }
 					/>
 					<ToggleControl
-						label={ __( 'Show days', 'countdown-timer' ) }
+						label={ __( 'Show days', 'gatherpress-countdown' ) }
 						checked={ showDays }
 						onChange={ ( value ) => setAttributes( { showDays: value } ) }
 					/>
 					<ToggleControl
-						label={ __( 'Show hours', 'countdown-timer' ) }
+						label={ __( 'Show hours', 'gatherpress-countdown' ) }
 						checked={ showHours }
 						onChange={ ( value ) => setAttributes( { showHours: value } ) }
 					/>
 					<ToggleControl
-						label={ __( 'Show minutes', 'countdown-timer' ) }
+						label={ __( 'Show minutes', 'gatherpress-countdown' ) }
 						checked={ showMinutes }
 						onChange={ ( value ) => setAttributes( { showMinutes: value } ) }
 					/>
 					<ToggleControl
-						label={ __( 'Show seconds', 'countdown-timer' ) }
+						label={ __( 'Show seconds', 'gatherpress-countdown' ) }
 						checked={ showSeconds }
 						onChange={ ( value ) => setAttributes( { showSeconds: value } ) }
 					/>
-					<Notice status="info" isDismissible={ false } className="countdown-timer-info-notice">
+					<Notice status="info" isDismissible={ false } className="gatherpress-countdown-info-notice">
 						<p>
 							{ __( 'Time segments cascade from largest to smallest. For example, a 40-day countdown with "months" and "days" selected displays "1 month, 10 days". Deselecting "months" updates it to "40 days".' ) }
 						</p>
@@ -558,27 +815,42 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 			</InspectorControls>
 
 			<div { ...blockProps }>
-				{ gatherPressEventId > 0 && (
-					<div className="countdown-timer-event-indicator">
-						<span className="countdown-timer-event-badge">🎟️</span>
-						<span>{ __( 'Synced with event', 'countdown-timer' ) }</span>
+				{ isContextDate && (
+					<div className="gatherpress-countdown-event-indicator gatherpress-countdown-context-indicator">
+						<span className="gatherpress-countdown-event-badge">📅</span>
+						<span>{ __( 'Using event date from context', 'gatherpress-countdown' ) }</span>
+					</div>
+				) }
+				{ isSyncedEvent && (
+					<div className="gatherpress-countdown-event-indicator">
+						<span className="gatherpress-countdown-event-badge">🎟️</span>
+						<span>{ __( 'Synced with event', 'gatherpress-countdown' ) }</span>
+					</div>
+				) }
+				{ isSyncedTerm && (
+					<div className="gatherpress-countdown-event-indicator">
+						<span className="gatherpress-countdown-event-badge">🏷️</span>
+						<span>
+							{ __( 'Synced with next event in: ', 'gatherpress-countdown' ) }
+							{ terms.find( t => t.id === gatherPressTermId )?.name }
+						</span>
 					</div>
 				) }
 				{ ! targetDateTime ? (
-					<div className="countdown-timer-placeholder">
-						<p>{ __( 'Select a date and time using the toolbar buttons above.', 'countdown-timer' ) }</p>
+					<div className="gatherpress-countdown-placeholder">
+						<p>{ __( 'Select a date and time using the toolbar buttons above.', 'gatherpress-countdown' ) }</p>
 					</div>
 				) : segments.length === 0 ? (
-					<div className="countdown-timer-placeholder">
-						<p>{ __( 'Please select at least one time segment to display.', 'countdown-timer' ) }</p>
+					<div className="gatherpress-countdown-placeholder">
+						<p>{ __( 'Please select at least one time segment to display.', 'gatherpress-countdown' ) }</p>
 					</div>
 				) : (
-					<div className="countdown-timer" data-mode={ mode }>
+					<div className="gatherpress-countdown" data-mode={ mode }>
 						{ segments.map( ( segment, index ) => (
-							<div key={ index } className="countdown-timer-segment">
-								<span className="countdown-timer-number">{ formatNumber( segment.value ) }</span>
+							<div key={ index } className="gatherpress-countdown-segment">
+								<span className="gatherpress-countdown-number">{ formatNumber( segment.value ) }</span>
 								{ showLabels && (
-									<span className="countdown-timer-label">{ segment.label }</span>
+									<span className="gatherpress-countdown-label">{ segment.label }</span>
 								) }
 							</div>
 						) ) }

@@ -23,14 +23,8 @@
 		const difference = target - now;
 		const absDifference = Math.abs( difference );
 
-		// Calculate total units
-		const totalSeconds = Math.floor( absDifference / 1000 );
-		const totalMinutes = Math.floor( totalSeconds / 60 );
-		const totalHours = Math.floor( totalMinutes / 60 );
-		const totalDays = Math.floor( totalHours / 24 );
-		const totalWeeks = Math.floor( totalDays / 7 );
-		const totalMonths = Math.floor( totalDays / 30.44 );
-		const totalYears = Math.floor( totalDays / 365.25 );
+		// Calculate remaining time in seconds
+		let remainingSeconds = Math.floor( absDifference / 1000 );
 
 		// Initialize result object
 		const result = {
@@ -44,79 +38,45 @@
 			total: difference,
 		};
 
-		// Calculate cascading values based on selected segments
-		let remainingSeconds = totalSeconds;
-
+		// Calculate each segment, subtracting from remainingSeconds as we go
 		if ( segments.showYears ) {
-			result.years = totalYears;
-			remainingSeconds -= totalYears * 365.25 * 24 * 60 * 60;
+			const secondsPerYear = 365.25 * 24 * 60 * 60;
+			result.years = Math.floor( remainingSeconds / secondsPerYear );
+			remainingSeconds -= result.years * secondsPerYear;
 		}
 
 		if ( segments.showMonths ) {
-			const monthsToShow = segments.showYears 
-				? Math.floor( remainingSeconds / ( 30.44 * 24 * 60 * 60 ) ) % 12
-				: totalMonths;
-			result.months = monthsToShow;
-			if ( segments.showYears ) {
-				remainingSeconds -= monthsToShow * 30.44 * 24 * 60 * 60;
-			} else {
-				remainingSeconds -= totalMonths * 30.44 * 24 * 60 * 60;
-			}
+			const secondsPerMonth = 30.44 * 24 * 60 * 60;
+			result.months = Math.floor( remainingSeconds / secondsPerMonth );
+			remainingSeconds -= result.months * secondsPerMonth;
 		}
 
 		if ( segments.showWeeks ) {
-			const weeksToShow = ( segments.showYears || segments.showMonths )
-				? Math.floor( remainingSeconds / ( 7 * 24 * 60 * 60 ) ) % 4
-				: totalWeeks;
-			result.weeks = weeksToShow;
-			if ( segments.showYears || segments.showMonths ) {
-				remainingSeconds -= weeksToShow * 7 * 24 * 60 * 60;
-			} else {
-				remainingSeconds -= totalWeeks * 7 * 24 * 60 * 60;
-			}
+			const secondsPerWeek = 7 * 24 * 60 * 60;
+			result.weeks = Math.floor( remainingSeconds / secondsPerWeek );
+			remainingSeconds -= result.weeks * secondsPerWeek;
 		}
 
 		if ( segments.showDays ) {
-			const daysToShow = ( segments.showYears || segments.showMonths || segments.showWeeks )
-				? Math.floor( remainingSeconds / ( 24 * 60 * 60 ) ) % 7
-				: totalDays;
-			result.days = daysToShow;
-			if ( segments.showYears || segments.showMonths || segments.showWeeks ) {
-				remainingSeconds -= daysToShow * 24 * 60 * 60;
-			} else {
-				remainingSeconds -= totalDays * 24 * 60 * 60;
-			}
+			const secondsPerDay = 24 * 60 * 60;
+			result.days = Math.floor( remainingSeconds / secondsPerDay );
+			remainingSeconds -= result.days * secondsPerDay;
 		}
 
 		if ( segments.showHours ) {
-			const hoursToShow = ( segments.showYears || segments.showMonths || segments.showWeeks || segments.showDays )
-				? Math.floor( remainingSeconds / ( 60 * 60 ) ) % 24
-				: totalHours;
-			result.hours = hoursToShow;
-			if ( segments.showYears || segments.showMonths || segments.showWeeks || segments.showDays ) {
-				remainingSeconds -= hoursToShow * 60 * 60;
-			} else {
-				remainingSeconds -= totalHours * 60 * 60;
-			}
+			const secondsPerHour = 60 * 60;
+			result.hours = Math.floor( remainingSeconds / secondsPerHour );
+			remainingSeconds -= result.hours * secondsPerHour;
 		}
 
 		if ( segments.showMinutes ) {
-			const minutesToShow = ( segments.showYears || segments.showMonths || segments.showWeeks || segments.showDays || segments.showHours )
-				? Math.floor( remainingSeconds / 60 ) % 60
-				: totalMinutes;
-			result.minutes = minutesToShow;
-			if ( segments.showYears || segments.showMonths || segments.showWeeks || segments.showDays || segments.showHours ) {
-				remainingSeconds -= minutesToShow * 60;
-			} else {
-				remainingSeconds -= totalMinutes * 60;
-			}
+			const secondsPerMinute = 60;
+			result.minutes = Math.floor( remainingSeconds / secondsPerMinute );
+			remainingSeconds -= result.minutes * secondsPerMinute;
 		}
 
 		if ( segments.showSeconds ) {
-			const secondsToShow = ( segments.showYears || segments.showMonths || segments.showWeeks || segments.showDays || segments.showHours || segments.showMinutes )
-				? Math.floor( remainingSeconds ) % 60
-				: totalSeconds;
-			result.seconds = secondsToShow;
+			result.seconds = Math.floor( remainingSeconds );
 		}
 
 		return result;
@@ -155,7 +115,7 @@
 		};
 
 		const timeLeft = calculateTimeDifference( targetDateTime, segments );
-		const segmentElements = timerElement.querySelectorAll( '.countdown-timer-segment' );
+		const segmentElements = timerElement.querySelectorAll( '.gatherpress-countdown-segment' );
 
 		if ( segmentElements.length === 0 ) {
 			return;
@@ -208,7 +168,7 @@
 			}
 			
 			const value = values[ index ];
-			const numberElement = segment.querySelector( '.countdown-timer-number' );
+			const numberElement = segment.querySelector( '.gatherpress-countdown-number' );
 			
 			if ( numberElement ) {
 				numberElement.textContent = formatNumber( value );
@@ -238,7 +198,7 @@
 	 * @return {void}
 	 */
 	function initCountdownTimers() {
-		const timers = document.querySelectorAll( '.countdown-timer' );
+		const timers = document.querySelectorAll( '.gatherpress-countdown' );
 		
 		if ( timers.length === 0 ) {
 			return;
