@@ -601,30 +601,14 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 		}
 		
 		return (
-			<>
-				<ComboboxControl
-					label={ __( 'Select an event', 'gatherpress-countdown' ) }
-					value={ gatherPressEventId || null }
-					onChange={ handleEventChange }
-					options={ eventOptions }
-					allowReset
-					help={ gatherPressEventId > 0 ? __( 'Date synced with selected event', 'gatherpress-countdown' ) : '' }
-				/>
-				{ gatherPressEventId > 0 && (
-					<Button
-						isSecondary
-						isSmall
-						onClick={ () => setAttributes( { 
-						gatherPressEventId: 0,
-						gatherPressTaxonomy: '',
-						gatherPressTermId: 0
-					} ) }
-						style={{ marginTop: '8px' }}
-					>
-						{ __( 'Clear selection', 'gatherpress-countdown' ) }
-					</Button>
-				) }
-			</>
+			<ComboboxControl
+				label={ __( 'Select an event', 'gatherpress-countdown' ) }
+				value={ gatherPressEventId || null }
+				onChange={ handleEventChange }
+				options={ eventOptions }
+				allowReset
+				help={ gatherPressEventId > 0 ? __( 'Date synced with selected event', 'gatherpress-countdown' ) : '' }
+			/>
 		);
 	};
 

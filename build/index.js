@@ -649,27 +649,13 @@ function Edit({
         message: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('No GatherPress events found.', 'gatherpress-countdown')
       });
     }
-    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.Fragment, {
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.ComboboxControl, {
-        label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select an event', 'gatherpress-countdown'),
-        value: gatherPressEventId || null,
-        onChange: handleEventChange,
-        options: eventOptions,
-        allowReset: true,
-        help: gatherPressEventId > 0 ? (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Date synced with selected event', 'gatherpress-countdown') : ''
-      }), gatherPressEventId > 0 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.Button, {
-        isSecondary: true,
-        isSmall: true,
-        onClick: () => setAttributes({
-          gatherPressEventId: 0,
-          gatherPressTaxonomy: '',
-          gatherPressTermId: 0
-        }),
-        style: {
-          marginTop: '8px'
-        },
-        children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Clear selection', 'gatherpress-countdown')
-      })]
+    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.ComboboxControl, {
+      label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select an event', 'gatherpress-countdown'),
+      value: gatherPressEventId || null,
+      onChange: handleEventChange,
+      options: eventOptions,
+      allowReset: true,
+      help: gatherPressEventId > 0 ? (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Date synced with selected event', 'gatherpress-countdown') : ''
     });
   };
 
