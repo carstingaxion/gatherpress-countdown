@@ -459,6 +459,7 @@ function Edit({
     showSeconds
   };
   const [timeLeft, setTimeLeft] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useState)(calculateTimeDifference(targetDateTime, segmentConfig));
+  const [openDropdown, setOpenDropdown] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useState)(null);
   const {
     updateBlockAttributes
   } = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_4__.useDispatch)('core/block-editor');
@@ -770,53 +771,79 @@ function Edit({
       })]
     });
   };
-
-  /**
-   * Render toolbar dropdown button.
-   *
-   * @param {string}   icon        - Icon name.
-   * @param {string}   label       - Button label.
-   * @param {boolean}  isPressed   - Whether button is pressed.
-   * @param {Function} renderFn    - Function to render dropdown content.
-   * @param {string}   popoverClass - Popover class name.
-   * @return {Element} Toolbar dropdown.
-   */
-  const renderToolbarDropdown = (icon, label, isPressed, renderFn, popoverClass) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.Dropdown, {
-    contentClassName: popoverClass,
-    position: "bottom center",
-    renderToggle: ({
-      isOpen,
-      onToggle
-    }) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.ToolbarButton, {
-      icon: icon,
-      label: label,
-      onClick: onToggle,
-      "aria-expanded": isOpen,
-      isPressed: isPressed
-    }),
-    renderContent: renderFn
-  });
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.Fragment, {
     children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_1__.BlockControls, {
       children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxs)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.ToolbarGroup, {
-        children: [renderToolbarDropdown('calendar-alt', (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select date and time', 'gatherpress-countdown'), isManualDate, () => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.DateTimePicker, {
-          currentDate: targetDateTime || null,
-          onChange: newDateTime => {
-            setAttributes({
-              targetDateTime: newDateTime,
-              gatherPressEventId: 0,
-              gatherPressTaxonomy: '',
-              gatherPressTermId: 0
-            });
-          },
-          is12Hour: false
-        }), 'gatherpress-countdown-datetime-popover'), renderToolbarDropdown('awards', (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select GatherPress event', 'gatherpress-countdown'), isSyncedEvent, () => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("div", {
-          className: "gatherpress-countdown-gatherpress-selector",
-          children: renderEventSelector()
-        }), 'gatherpress-countdown-gatherpress-popover'), renderToolbarDropdown('tag', (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select from taxonomy', 'gatherpress-countdown'), isSyncedTerm, () => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("div", {
-          className: "gatherpress-countdown-taxonomy-selector",
-          children: renderTaxonomySelector()
-        }), 'gatherpress-countdown-taxonomy-popover')]
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.Dropdown, {
+          contentClassName: "gatherpress-countdown-datetime-popover",
+          position: "bottom center",
+          renderToggle: ({
+            isOpen,
+            onToggle
+          }) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.ToolbarButton, {
+            icon: "calendar-alt",
+            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select date and time', 'gatherpress-countdown'),
+            onClick: () => {
+              setOpenDropdown(isOpen ? null : 'datetime');
+              onToggle();
+            },
+            "aria-expanded": isOpen,
+            isPressed: isManualDate
+          }),
+          renderContent: () => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.DateTimePicker, {
+            currentDate: targetDateTime || null,
+            onChange: newDateTime => {
+              setAttributes({
+                targetDateTime: newDateTime,
+                gatherPressEventId: 0,
+                gatherPressTaxonomy: '',
+                gatherPressTermId: 0
+              });
+              setOpenDropdown(null);
+            },
+            is12Hour: false
+          })
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.Dropdown, {
+          contentClassName: "gatherpress-countdown-gatherpress-popover",
+          position: "bottom center",
+          renderToggle: ({
+            isOpen,
+            onToggle
+          }) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.ToolbarButton, {
+            icon: "awards",
+            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select GatherPress event', 'gatherpress-countdown'),
+            onClick: () => {
+              setOpenDropdown(isOpen ? null : 'event');
+              onToggle();
+            },
+            "aria-expanded": isOpen,
+            isPressed: isSyncedEvent
+          }),
+          renderContent: () => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("div", {
+            className: "gatherpress-countdown-gatherpress-selector",
+            children: renderEventSelector()
+          })
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.Dropdown, {
+          contentClassName: "gatherpress-countdown-taxonomy-popover",
+          position: "bottom center",
+          renderToggle: ({
+            isOpen,
+            onToggle
+          }) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.ToolbarButton, {
+            icon: "tag",
+            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select from taxonomy', 'gatherpress-countdown'),
+            onClick: () => {
+              setOpenDropdown(isOpen ? null : 'taxonomy');
+              onToggle();
+            },
+            "aria-expanded": isOpen,
+            isPressed: isSyncedTerm
+          }),
+          renderContent: () => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("div", {
+            className: "gatherpress-countdown-taxonomy-selector",
+            children: renderTaxonomySelector()
+          })
+        })]
       })
     }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxs)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_1__.InspectorControls, {
       children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.PanelBody, {

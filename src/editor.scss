@@ -2,26 +2,30 @@
  * The following styles get applied inside the editor only.
  */
 
+.gatherpress-countdown-datetime-popover,
+.gatherpress-countdown-gatherpress-popover,
+.gatherpress-countdown-taxonomy-popover {
+	& .components-popover__content {
+		min-width: 200px;
+		max-width: 400px;
+	}
+}
+
 .gatherpress-countdown-datetime-popover {
 	.components-datetime {
 		padding: 1rem;
 	}
 }
 
-.gatherpress-countdown-gatherpress-popover,
-.gatherpress-countdown-taxonomy-popover {
-	min-width: 500px;
-	max-width: 600px;
-}
 
 .gatherpress-countdown-gatherpress-selector,
 .gatherpress-countdown-taxonomy-selector {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: 12px;
 	padding: 16px;
 
-	.components-form-token-field {
+	.components-combobox-control {
 		margin-bottom: 0;
 	}
 
@@ -31,6 +35,12 @@
 		text-transform: uppercase;
 		margin-bottom: 8px;
 		color: #1e1e1e;
+	}
+
+	.components-base-control__help {
+		margin-top: 8px;
+		font-size: 12px;
+		color: #757575;
 	}
 }
 

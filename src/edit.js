@@ -423,6 +423,7 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 	};
 	
 	const [ timeLeft, setTimeLeft ] = useState( calculateTimeDifference( targetDateTime, segmentConfig ) );
+	const [ openDropdown, setOpenDropdown ] = useState( null );
 	const { updateBlockAttributes } = useDispatch( 'core/block-editor' );
 
 	// Get WordPress date and time format settings
@@ -735,42 +736,26 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 		);
 	};
 
-	/**
-	 * Render toolbar dropdown button.
-	 *
-	 * @param {string}   icon        - Icon name.
-	 * @param {string}   label       - Button label.
-	 * @param {boolean}  isPressed   - Whether button is pressed.
-	 * @param {Function} renderFn    - Function to render dropdown content.
-	 * @param {string}   popoverClass - Popover class name.
-	 * @return {Element} Toolbar dropdown.
-	 */
-	const renderToolbarDropdown = ( icon, label, isPressed, renderFn, popoverClass ) => (
-		<Dropdown
-			contentClassName={ popoverClass }
-			position="bottom center"
-			renderToggle={ ( { isOpen, onToggle } ) => (
-				<ToolbarButton
-					icon={ icon }
-					label={ label }
-					onClick={ onToggle }
-					aria-expanded={ isOpen }
-					isPressed={ isPressed }
-				/>
-			) }
-			renderContent={ renderFn }
-		/>
-	);
-
 	return (
 		<>
 			<BlockControls>
 				<ToolbarGroup>
-					{ renderToolbarDropdown(
-						'calendar-alt',
-						__( 'Select date and time', 'gatherpress-countdown' ),
-						isManualDate,
-						() => (
+					<Dropdown
+						contentClassName="gatherpress-countdown-datetime-popover"
+						position="bottom center"
+						renderToggle={ ( { isOpen, onToggle } ) => (
+							<ToolbarButton
+								icon="calendar-alt"
+								label={ __( 'Select date and time', 'gatherpress-countdown' ) }
+								onClick={ () => {
+									setOpenDropdown( isOpen ? null : 'datetime' );
+									onToggle();
+								} }
+								aria-expanded={ isOpen }
+								isPressed={ isManualDate }
+							/>
+						) }
+						renderContent={ () => (
 							<DateTimePicker
 								currentDate={ targetDateTime || null }
 								onChange={ ( newDateTime ) => {
@@ -780,26 +765,54 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 										gatherPressTaxonomy: '',
 										gatherPressTermId: 0
 									} );
+									setOpenDropdown( null );
 								} }
 								is12Hour={ false }
 							/>
-						),
-						'gatherpress-countdown-datetime-popover'
-					) }
-					{ renderToolbarDropdown(
-						'awards',
-						__( 'Select GatherPress event', 'gatherpress-countdown' ),
-						isSyncedEvent,
-						() => <div className="gatherpress-countdown-gatherpress-selector">{ renderEventSelector() }</div>,
-						'gatherpress-countdown-gatherpress-popover'
-					) }
-					{ renderToolbarDropdown(
-						'tag',
-						__( 'Select from taxonomy', 'gatherpress-countdown' ),
-						isSyncedTerm,
-						() => <div className="gatherpress-countdown-taxonomy-selector">{ renderTaxonomySelector() }</div>,
-						'gatherpress-countdown-taxonomy-popover'
-					) }
+						) }
+					/>
+					<Dropdown
+						contentClassName="gatherpress-countdown-gatherpress-popover"
+						position="bottom center"
+						renderToggle={ ( { isOpen, onToggle } ) => (
+							<ToolbarButton
+								icon="awards"
+								label={ __( 'Select GatherPress event', 'gatherpress-countdown' ) }
+								onClick={ () => {
+									setOpenDropdown( isOpen ? null : 'event' );
+									onToggle();
+								} }
+								aria-expanded={ isOpen }
+								isPressed={ isSyncedEvent }
+							/>
+						) }
+						renderContent={ () => (
+							<div className="gatherpress-countdown-gatherpress-selector">
+								{ renderEventSelector() }
+							</div>
+						) }
+					/>
+					<Dropdown
+						contentClassName="gatherpress-countdown-taxonomy-popover"
+						position="bottom center"
+						renderToggle={ ( { isOpen, onToggle } ) => (
+							<ToolbarButton
+								icon="tag"
+								label={ __( 'Select from taxonomy', 'gatherpress-countdown' ) }
+								onClick={ () => {
+									setOpenDropdown( isOpen ? null : 'taxonomy' );
+									onToggle();
+								} }
+								aria-expanded={ isOpen }
+								isPressed={ isSyncedTerm }
+							/>
+						) }
+						renderContent={ () => (
+							<div className="gatherpress-countdown-taxonomy-selector">
+								{ renderTaxonomySelector() }
+							</div>
+						) }
+					/>
 				</ToolbarGroup>
 			</BlockControls>
 
