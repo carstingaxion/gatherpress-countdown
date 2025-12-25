@@ -97,23 +97,44 @@
   font-weight: 600;
   letter-spacing: 0.1em;
 }
-/* Minimal Style */
+/* Minimal Style - Paragraph-like inline display */
+.is-style-minimal .gatherpress-countdown-wrapper {
+  min-height: auto;
+  justify-content: flex-start;
+}
 .is-style-minimal .gatherpress-countdown {
-  gap: 3rem;
+  gap: 0.5em;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  line-height: 1.6;
+  font-size: inherit;
 }
 .is-style-minimal .gatherpress-countdown-segment {
-  gap: 0.25rem;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.25em;
 }
 .is-style-minimal .gatherpress-countdown-number {
-  font-size: 3.5rem;
-  font-weight: 200;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-size: inherit;
+  font-weight: 600;
+  line-height: inherit;
+  font-family: inherit;
 }
 .is-style-minimal .gatherpress-countdown-label {
-  font-size: 0.7rem;
+  font-size: inherit;
   font-weight: 400;
-  letter-spacing: 0.15em;
-  opacity: 0.5;
+  text-transform: none;
+  letter-spacing: normal;
+  opacity: 1;
+  line-height: inherit;
+}
+.is-style-minimal {
+  /* Add comma separator between segments */
+}
+.is-style-minimal .gatherpress-countdown-segment:not(:last-child)::after {
+  content: ",";
+  margin-right: 0;
+  opacity: 0.7;
 }
 /* Bold Style */
 .is-style-bold .gatherpress-countdown {
@@ -160,6 +181,13 @@
     font-size: 2rem;
     left: -1rem;
   }
+  /* Preserve minimal style inline layout on mobile */
+  .is-style-minimal .gatherpress-countdown-number {
+    font-size: inherit !important;
+  }
+  .is-style-minimal .gatherpress-countdown-label {
+    font-size: inherit !important;
+  }
 }
 @media (max-width: 480px) {
   .gatherpress-countdown {
@@ -171,5 +199,19 @@
   .gatherpress-countdown-segment {
     min-width: 60px !important;
     padding: 1rem 0.75rem !important;
+  }
+  /* Keep minimal style inline on small screens */
+  .is-style-minimal .gatherpress-countdown {
+    gap: 0.5em !important;
+  }
+  .is-style-minimal .gatherpress-countdown-number {
+    font-size: inherit !important;
+  }
+  .is-style-minimal .gatherpress-countdown-label {
+    font-size: inherit !important;
+  }
+  .is-style-minimal .gatherpress-countdown-segment {
+    min-width: auto !important;
+    padding: 0 !important;
   }
 }
