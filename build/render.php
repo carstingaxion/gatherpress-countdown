@@ -107,7 +107,7 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 			}
 
 			// Determine mode
-			$actual_mode = $this->determine_mode( $target_date_time );
+			$actual_mode = $this->determine_mode( $attributes, $target_date_time );
 
 			// Render the timer
 			return $this->render_timer(
@@ -152,7 +152,8 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 
 			// Check term event
 			if ( $gatherpress_term_id > 0 && ! empty( $gatherpress_taxonomy ) ) {
-				$term_event_date = $this->get_next_event_from_term( $gatherpress_taxonomy, $gatherpress_term_id );
+				$taxonomy_mode = $this->get_attr( $attributes, 'taxonomyMode', 'countdown' );
+				$term_event_date = $this->get_next_event_from_term( $gatherpress_taxonomy, $gatherpress_term_id, $taxonomy_mode );
 				if ( ! empty( $term_event_date ) ) {
 					return $term_event_date;
 				}
@@ -200,16 +201,21 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		 *
 		 * @param string $taxonomy Taxonomy slug.
 		 * @param int    $term_id  Term ID.
+		 * @param string $mode     Display mode ('countdown' or 'countup').
 		 * @return string Event date or empty string.
 		 */
-		private function get_next_event_from_term( string $taxonomy, int $term_id ): string {
+		private function get_next_event_from_term( string $taxonomy, int $term_id, string $mode ): string {
+			$meta_compare = $mode === 'countup' ? '<=' : '>=';
+			$order = $mode === 'countup' ? 'DESC' : 'ASC';
+
 			$next_event_args = array(
 				'post_type'      => 'gatherpress_event',
 				'post_status'    => 'publish',
+				'gatherpress_event_query' => $mode === 'countup' ? 'past' : 'upcoming',
 				'posts_per_page' => 1,
-				'orderby'        => 'meta_value',
-				'meta_key'       => 'gatherpress_datetime_start',
-				'order'          => 'ASC',
+				'orderby'        => 'event_date',
+				// 'meta_key'       => 'gatherpress_datetime_start',
+				'order'          => $order,
 				'tax_query'      => array(
 					array(
 						'taxonomy' => $taxonomy,
@@ -217,14 +223,14 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 						'terms'    => $term_id,
 					),
 				),
-				'meta_query'     => array(
-					array(
-						'key'     => 'gatherpress_datetime_start',
-						'value'   => current_time( 'mysql' ),
-						'compare' => '>=',
-						'type'    => 'DATETIME',
-					),
-				),
+				// 'meta_query'     => array(
+				// 	array(
+				// 		'key'     => 'gatherpress_datetime_start',
+				// 		'value'   => current_time( 'mysql' ),
+				// 		'compare' => $meta_compare,
+				// 		'type'    => 'DATETIME',
+				// 	),
+				// ),
 			);
 
 			$next_events = get_posts( $next_event_args );
@@ -326,10 +332,34 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		/**
 		 * Determine countdown mode.
 		 *
+		 * @param array  $attributes       Block attributes.
 		 * @param string $target_date_time Target date time.
 		 * @return string Mode ('countdown' or 'countup').
 		 */
-		private function determine_mode( string $target_date_time ): string {
+		private function determine_mode( array $attributes, string $target_date_time ): string {
+			$auto_mode      = $this->get_attr( $attributes, 'autoMode', true );
+			$event_mode     = $this->get_attr( $attributes, 'eventMode', 'countdown' );
+			$taxonomy_mode  = $this->get_attr( $attributes, 'taxonomyMode', 'countdown' );
+			$event_id       = $this->get_attr( $attributes, 'gatherPressEventId', 0 );
+			$term_id        = $this->get_attr( $attributes, 'gatherPressTermId', 0 );
+			$explicit_mode  = $this->get_attr( $attributes, 'mode', 'countdown' );
+
+			// If using event mode, use the explicitly set event mode
+			if ( $event_id > 0 ) {
+				return $event_mode;
+			}
+
+			// If using taxonomy mode, use the explicitly set taxonomy mode
+			if ( $term_id > 0 ) {
+				return $taxonomy_mode;
+			}
+
+			// If auto mode is disabled, use the current explicit mode
+			if ( ! $auto_mode ) {
+				return $explicit_mode;
+			}
+
+			// Auto mode is enabled - determine based on target date
 			$now    = time();
 			$target = strtotime( $target_date_time );
 			return ( $target - $now ) < 0 ? 'countup' : 'countdown';

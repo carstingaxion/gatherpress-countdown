@@ -45,6 +45,26 @@
       ],
       "default": "countdown"
     },
+    "autoMode": {
+      "type": "boolean",
+      "default": true
+    },
+    "eventMode": {
+      "type": "string",
+      "enum": [
+        "countdown",
+        "countup"
+      ],
+      "default": "countdown"
+    },
+    "taxonomyMode": {
+      "type": "string",
+      "enum": [
+        "countdown",
+        "countup"
+      ],
+      "default": "countdown"
+    },
     "showLabels": {
       "type": "boolean",
       "default": true

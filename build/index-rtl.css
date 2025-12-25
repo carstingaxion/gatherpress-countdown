@@ -127,8 +127,10 @@
   margin: 1rem 0;
 }
 .editor-styles-wrapper .gatherpress-countdown-wrapper .gatherpress-countdown-event-indicator {
-  position: relative;
+  position: absolute;
   z-index: 1;
+  right: 0;
+  top: 0;
 }
 .gatherpress-countdown-info-notice {
   margin-top: 16px !important;

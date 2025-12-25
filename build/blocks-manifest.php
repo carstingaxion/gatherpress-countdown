@@ -48,6 +48,26 @@ return array(
 				),
 				'default' => 'countdown'
 			),
+			'autoMode' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'eventMode' => array(
+				'type' => 'string',
+				'enum' => array(
+					'countdown',
+					'countup'
+				),
+				'default' => 'countdown'
+			),
+			'taxonomyMode' => array(
+				'type' => 'string',
+				'enum' => array(
+					'countdown',
+					'countup'
+				),
+				'default' => 'countdown'
+			),
 			'showLabels' => array(
 				'type' => 'boolean',
 				'default' => true

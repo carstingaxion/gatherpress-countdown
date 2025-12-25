@@ -151,8 +151,10 @@
 		
 		.gatherpress-countdown-event-indicator {
 			// Position notice above the countdown, not inside it
-			position: relative;
+			position: absolute;
 			z-index: 1;
+			left: 0;
+			top: 0;
 		}
 	}
 }

@@ -25,7 +25,8 @@ import {
 	Spinner,
 	MenuGroup,
 	MenuItem,
-	Button
+	Button,
+	RadioControl
 } from '@wordpress/components';
 
 import { useState, useEffect } from '@wordpress/element';
@@ -167,16 +168,17 @@ function getSegmentLabel( type, value ) {
 /**
  * Custom hook to fetch GatherPress events.
  *
+ * @param {string} mode - Display mode to filter events ('countdown' for upcoming, 'countup' for past).
  * @return {Object} Events data and loading state.
  */
-function useGatherPressEvents() {
+function useGatherPressEvents( mode ) {
 	return useSelect( ( select ) => {
 		const { getEntityRecords, isResolving } = select( coreStore );
 		const queryArgs = {
 			per_page: 100,
 			status: 'publish',
-			orderby: 'date',
-			order: 'desc',
+			order: mode === 'countup' ? 'desc' : 'asc',
+			gatherpress_event_query: mode === 'countup' ? 'past' : 'upcoming',
 		};
 		
 		return {
@@ -187,7 +189,7 @@ function useGatherPressEvents() {
 				queryArgs,
 			] ),
 		};
-	}, [] );
+	}, [ mode ] );
 }
 
 /**
@@ -246,9 +248,10 @@ function useTaxonomyTerms( taxonomy ) {
  *
  * @param {string} taxonomy - Taxonomy slug.
  * @param {number} termId   - Term ID.
+ * @param {string} mode     - Display mode to filter events ('countdown' for upcoming, 'countup' for past).
  * @return {Object} Next event data and loading state.
  */
-function useNextEventFromTerm( taxonomy, termId ) {
+function useNextEventFromTerm( taxonomy, termId, mode ) {
 	return useSelect(
 		( select ) => {
 			if ( ! taxonomy || ! termId ) {
@@ -260,6 +263,8 @@ function useNextEventFromTerm( taxonomy, termId ) {
 				per_page: 1,
 				status: 'publish',
 				[taxonomy]: termId,
+				gatherpress_event_query: mode === 'countup' ? 'past' : 'upcoming',
+				order: mode === 'countup' ? 'desc' : 'asc',
 			};
 			
 			const events = getEntityRecords( 'postType', 'gatherpress_event', queryArgs ) || [];
@@ -273,7 +278,7 @@ function useNextEventFromTerm( taxonomy, termId ) {
 				] ),
 			};
 		},
-		[ taxonomy, termId ]
+		[ taxonomy, termId, mode ]
 	);
 }
 
@@ -401,7 +406,8 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 		gatherPressEventId,
 		gatherPressTaxonomy,
 		gatherPressTermId,
-		mode, 
+		mode,
+		autoMode,
 		showLabels,
 		showYears,
 		showMonths,
@@ -439,11 +445,17 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 
 	// Fetch all data using custom hooks
 	const contextEventDate = useContextEventDate( contextPostId, contextPostType, isEventContext );
-	const { events, isLoadingEvents } = useGatherPressEvents();
+	const { events, isLoadingEvents } = useGatherPressEvents( mode );
 	const { taxonomies, isLoadingTaxonomies } = useGatherPressTaxonomies();
 	const { terms, isLoadingTerms } = useTaxonomyTerms( gatherPressTaxonomy );
-	const { nextEventFromTerm, isLoadingNextEvent } = useNextEventFromTerm( gatherPressTaxonomy, gatherPressTermId );
+	const { nextEventFromTerm, isLoadingNextEvent } = useNextEventFromTerm( gatherPressTaxonomy, gatherPressTermId, mode );
 	const selectedEvent = useGatherPressEvent( gatherPressEventId );
+
+	// Determine which source is active
+	const isManualDate = targetDateTime && ! gatherPressEventId && ! gatherPressTermId && ! isEventContext;
+	const isSyncedEvent = gatherPressEventId > 0;
+	const isSyncedTerm = gatherPressTermId > 0;
+	const isContextDate = isEventContext && contextEventDate && ! gatherPressEventId && ! gatherPressTermId && targetDateTime === contextEventDate;
 
 	// Auto-sync with context event date when in event context
 	useEffect( () => {
@@ -482,15 +494,15 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 		return () => clearInterval( interval );
 	}, [ targetDateTime, showYears, showMonths, showWeeks, showDays, showHours, showMinutes, showSeconds ] );
 
-	// Auto-detect mode based on target date
+	// Auto-detect mode based on target date (only if autoMode is enabled and using countdown mode)
 	useEffect( () => {
-		if ( targetDateTime ) {
+		if ( targetDateTime && autoMode && mode === 'countdown' ) {
 			const newMode = timeLeft.total < 0 ? 'countup' : 'countdown';
 			if ( newMode !== mode ) {
 				setAttributes( { mode: newMode } );
 			}
 		}
-	}, [ targetDateTime, timeLeft.total, mode, setAttributes ] );
+	}, [ targetDateTime, timeLeft.total, mode, autoMode, setAttributes ] );
 
 	// Update block name with target date
 	useEffect( () => {
@@ -535,12 +547,6 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 		value: term.id,
 		label: term.name
 	}) );
-
-	// Determine date source
-	const isContextDate = isEventContext && contextEventDate && ! gatherPressEventId && ! gatherPressTermId && targetDateTime === contextEventDate;
-	const isManualDate = targetDateTime && ! gatherPressEventId && ! gatherPressTermId && ! isContextDate;
-	const isSyncedEvent = gatherPressEventId > 0;
-	const isSyncedTerm = gatherPressTermId > 0;
 
 	/**
 	 * Handle event selection change.
@@ -802,6 +808,24 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 
 			<InspectorControls>
 				<PanelBody title={ __( 'Display Settings', 'gatherpress-countdown' ) }>
+					<RadioControl
+						label={ __( 'Display mode', 'gatherpress-countdown' ) }
+						help={ __( 'Choose how to display time.', 'gatherpress-countdown' ) }
+						selected={ mode }
+						options={ [
+							{ label: __( 'Countdown (time until event)', 'gatherpress-countdown' ), value: 'countdown' },
+							{ label: __( 'Count up (time since event)', 'gatherpress-countdown' ), value: 'countup' },
+						] }
+						onChange={ ( value ) => setAttributes( { mode: value } ) }
+					/>
+					{ mode === 'countdown' && (
+						<ToggleControl
+							label={ __( 'Automatic mode switching', 'gatherpress-countdown' ) }
+							checked={ autoMode }
+							onChange={ ( value ) => setAttributes( { autoMode: value } ) }
+							help={ __( 'Automatically switch from countdown to count-up when the target date is reached.', 'gatherpress-countdown' ) }
+						/>
+					) }
 					<ToggleControl
 						label={ __( 'Show labels', 'gatherpress-countdown' ) }
 						checked={ showLabels }
