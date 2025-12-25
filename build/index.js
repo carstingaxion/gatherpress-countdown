@@ -459,8 +459,6 @@ function Edit({
     showSeconds
   };
   const [timeLeft, setTimeLeft] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useState)(calculateTimeDifference(targetDateTime, segmentConfig));
-  const [selectedEventTokens, setSelectedEventTokens] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useState)([]);
-  const [selectedTermTokens, setSelectedTermTokens] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useState)([]);
   const {
     updateBlockAttributes
   } = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_4__.useDispatch)('core/block-editor');
@@ -506,28 +504,6 @@ function Edit({
       }
     }
   }, [isEventContext, contextEventDate, targetDateTime, gatherPressEventId, gatherPressTermId]);
-
-  // Update selected tokens when IDs change
-  (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useEffect)(() => {
-    if (gatherPressEventId && events.length > 0) {
-      const event = events.find(e => e.id === gatherPressEventId);
-      if (event) {
-        setSelectedEventTokens([event.title.rendered]);
-      }
-    } else {
-      setSelectedEventTokens([]);
-    }
-  }, [gatherPressEventId, events]);
-  (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useEffect)(() => {
-    if (gatherPressTermId && terms.length > 0) {
-      const term = terms.find(t => t.id === gatherPressTermId);
-      if (term) {
-        setSelectedTermTokens([term.name]);
-      }
-    } else {
-      setSelectedTermTokens([]);
-    }
-  }, [gatherPressTermId, terms]);
 
   // Update target date when synced sources change
   (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useEffect)(() => {
@@ -596,52 +572,65 @@ function Edit({
     label: getSegmentLabel(type, timeLeft[type])
   }));
 
-  /**
-   * Handle token field change with single selection.
-   *
-   * @param {string[]} tokens     - Selected tokens.
-   * @param {Array}    items       - Available items.
-   * @param {Function} setTokens   - Token setter.
-   * @param {string}   itemType    - Type of item ('event' or 'term').
-   * @param {Object}   clearAttrs  - Attributes to clear.
-   * @param {Function} otherSetter - Other token setter to clear.
-   */
-  const handleTokenChange = (tokens, items, setTokens, itemType, clearAttrs, otherSetter) => {
-    if (tokens.length === 0) {
-      setTokens([]);
-      setAttributes(clearAttrs);
-      return;
-    }
-    const selectedToken = tokens[tokens.length - 1];
-    const matchKey = itemType === 'event' ? 'title.rendered' : 'name';
-    const item = items.find(i => {
-      return itemType === 'event' ? i.title.rendered === selectedToken : i.name === selectedToken;
-    });
-    if (item) {
-      const displayValue = itemType === 'event' ? item.title.rendered : item.name;
-      setTokens([displayValue]);
-      const newAttrs = itemType === 'event' ? {
-        gatherPressEventId: item.id,
-        gatherPressTaxonomy: '',
-        gatherPressTermId: 0
-      } : {
-        gatherPressTermId: item.id,
-        gatherPressEventId: 0
-      };
-      setAttributes(newAttrs);
-      otherSetter([]);
-    }
-  };
+  // Prepare event options for ComboboxControl
+  const eventOptions = events.map(event => ({
+    value: event.id,
+    label: event.title.rendered
+  }));
 
-  // Prepare suggestions
-  const eventSuggestions = events.map(event => event.title.rendered);
-  const termSuggestions = terms.map(term => term.name);
+  // Prepare term options for ComboboxControl
+  const termOptions = terms.map(term => ({
+    value: term.id,
+    label: term.name
+  }));
 
   // Determine date source
   const isContextDate = isEventContext && contextEventDate && !gatherPressEventId && !gatherPressTermId && targetDateTime === contextEventDate;
   const isManualDate = targetDateTime && !gatherPressEventId && !gatherPressTermId && !isContextDate;
   const isSyncedEvent = gatherPressEventId > 0;
   const isSyncedTerm = gatherPressTermId > 0;
+
+  /**
+   * Handle event selection change.
+   *
+   * @param {number|string} value - Selected event ID.
+   */
+  const handleEventChange = value => {
+    if (!value) {
+      setAttributes({
+        gatherPressEventId: 0,
+        gatherPressTaxonomy: '',
+        gatherPressTermId: 0
+      });
+      return;
+    }
+    const eventId = parseInt(value, 10);
+    setAttributes({
+      gatherPressEventId: eventId,
+      gatherPressTaxonomy: '',
+      gatherPressTermId: 0
+    });
+  };
+
+  /**
+   * Handle term selection change.
+   *
+   * @param {number|string} value - Selected term ID.
+   */
+  const handleTermChange = value => {
+    if (!value) {
+      setAttributes({
+        gatherPressTermId: 0,
+        gatherPressEventId: 0
+      });
+      return;
+    }
+    const termId = parseInt(value, 10);
+    setAttributes({
+      gatherPressTermId: termId,
+      gatherPressEventId: 0
+    });
+  };
 
   /**
    * Render event selector dropdown content.
@@ -660,18 +649,25 @@ function Edit({
       });
     }
     return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.Fragment, {
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.FormTokenField, {
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.ComboboxControl, {
         label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select an event', 'gatherpress-countdown'),
-        value: selectedEventTokens,
-        suggestions: eventSuggestions,
-        onChange: tokens => handleTokenChange(tokens, events, setSelectedEventTokens, 'event', {
-          gatherPressEventId: 0
-        }, setSelectedTermTokens),
-        maxSuggestions: 10,
-        __experimentalExpandOnFocus: true,
-        __experimentalShowHowTo: false
-      }), gatherPressEventId > 0 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(SyncNotice, {
-        message: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Date synced with event', 'gatherpress-countdown')
+        value: gatherPressEventId || null,
+        onChange: handleEventChange,
+        options: eventOptions,
+        allowReset: true,
+        help: gatherPressEventId > 0 ? (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Date synced with selected event', 'gatherpress-countdown') : ''
+      }), gatherPressEventId > 0 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.Button, {
+        isSecondary: true,
+        isSmall: true,
+        onClick: () => setAttributes({
+          gatherPressEventId: 0,
+          gatherPressTaxonomy: '',
+          gatherPressTermId: 0
+        }),
+        style: {
+          marginTop: '8px'
+        },
+        children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Clear selection', 'gatherpress-countdown')
       })]
     });
   };
@@ -726,8 +722,9 @@ function Edit({
     if (terms.length === 0) {
       return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(EmptyState, {
         message: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('No terms found.', 'gatherpress-countdown'),
-        action: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.ToolbarButton, {
+        action: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.Button, {
           isSecondary: true,
+          isSmall: true,
           onClick: () => setAttributes({
             gatherPressTaxonomy: ''
           }),
@@ -738,30 +735,26 @@ function Edit({
     return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.Fragment, {
       children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxs)("div", {
         className: "gatherpress-countdown-taxonomy-header",
-        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.ToolbarButton, {
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.Button, {
+          isSmall: true,
           icon: "arrow-left-alt2",
           onClick: () => {
             setAttributes({
               gatherPressTaxonomy: '',
               gatherPressTermId: 0
             });
-            setSelectedTermTokens([]);
           },
           label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Back', 'gatherpress-countdown')
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("span", {
           className: "gatherpress-countdown-taxonomy-name",
           children: taxonomies.find(t => t.slug === gatherPressTaxonomy)?.name
         })]
-      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.FormTokenField, {
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.ComboboxControl, {
         label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select a term', 'gatherpress-countdown'),
-        value: selectedTermTokens,
-        suggestions: termSuggestions,
-        onChange: tokens => handleTokenChange(tokens, terms, setSelectedTermTokens, 'term', {
-          gatherPressTermId: 0
-        }, setSelectedEventTokens),
-        maxSuggestions: 10,
-        __experimentalExpandOnFocus: true,
-        __experimentalShowHowTo: false
+        value: gatherPressTermId || null,
+        onChange: handleTermChange,
+        options: termOptions,
+        allowReset: true
       }), gatherPressTermId > 0 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.Fragment, {
         children: isLoadingNextEvent ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(LoadingState, {
           message: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Finding next event...', 'gatherpress-countdown')
@@ -815,8 +808,6 @@ function Edit({
               gatherPressTaxonomy: '',
               gatherPressTermId: 0
             });
-            setSelectedEventTokens([]);
-            setSelectedTermTokens([]);
           },
           is12Hour: false
         }), 'gatherpress-countdown-datetime-popover'), renderToolbarDropdown('awards', (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select GatherPress event', 'gatherpress-countdown'), isSyncedEvent, () => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("div", {

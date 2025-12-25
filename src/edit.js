@@ -21,10 +21,11 @@ import {
 	Dropdown,
 	DateTimePicker,
 	Notice,
-	FormTokenField,
+	ComboboxControl,
 	Spinner,
 	MenuGroup,
-	MenuItem
+	MenuItem,
+	Button
 } from '@wordpress/components';
 
 import { useState, useEffect } from '@wordpress/element';
@@ -422,8 +423,6 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 	};
 	
 	const [ timeLeft, setTimeLeft ] = useState( calculateTimeDifference( targetDateTime, segmentConfig ) );
-	const [ selectedEventTokens, setSelectedEventTokens ] = useState( [] );
-	const [ selectedTermTokens, setSelectedTermTokens ] = useState( [] );
 	const { updateBlockAttributes } = useDispatch( 'core/block-editor' );
 
 	// Get WordPress date and time format settings
@@ -453,29 +452,6 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 			}
 		}
 	}, [ isEventContext, contextEventDate, targetDateTime, gatherPressEventId, gatherPressTermId ] );
-
-	// Update selected tokens when IDs change
-	useEffect( () => {
-		if ( gatherPressEventId && events.length > 0 ) {
-			const event = events.find( e => e.id === gatherPressEventId );
-			if ( event ) {
-				setSelectedEventTokens( [ event.title.rendered ] );
-			}
-		} else {
-			setSelectedEventTokens( [] );
-		}
-	}, [ gatherPressEventId, events ] );
-
-	useEffect( () => {
-		if ( gatherPressTermId && terms.length > 0 ) {
-			const term = terms.find( t => t.id === gatherPressTermId );
-			if ( term ) {
-				setSelectedTermTokens( [ term.name ] );
-			}
-		} else {
-			setSelectedTermTokens( [] );
-		}
-	}, [ gatherPressTermId, terms ] );
 
 	// Update target date when synced sources change
 	useEffect( () => {
@@ -547,51 +523,67 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 			label: getSegmentLabel( type, timeLeft[type] )
 		}) );
 
-	/**
-	 * Handle token field change with single selection.
-	 *
-	 * @param {string[]} tokens     - Selected tokens.
-	 * @param {Array}    items       - Available items.
-	 * @param {Function} setTokens   - Token setter.
-	 * @param {string}   itemType    - Type of item ('event' or 'term').
-	 * @param {Object}   clearAttrs  - Attributes to clear.
-	 * @param {Function} otherSetter - Other token setter to clear.
-	 */
-	const handleTokenChange = ( tokens, items, setTokens, itemType, clearAttrs, otherSetter ) => {
-		if ( tokens.length === 0 ) {
-			setTokens( [] );
-			setAttributes( clearAttrs );
-			return;
-		}
+	// Prepare event options for ComboboxControl
+	const eventOptions = events.map( event => ({
+		value: event.id,
+		label: event.title.rendered
+	}) );
 
-		const selectedToken = tokens[ tokens.length - 1 ];
-		const matchKey = itemType === 'event' ? 'title.rendered' : 'name';
-		const item = items.find( i => {
-			return itemType === 'event' ? i.title.rendered === selectedToken : i.name === selectedToken;
-		} );
-		
-		if ( item ) {
-			const displayValue = itemType === 'event' ? item.title.rendered : item.name;
-			setTokens( [ displayValue ] );
-			
-			const newAttrs = itemType === 'event'
-				? { gatherPressEventId: item.id, gatherPressTaxonomy: '', gatherPressTermId: 0 }
-				: { gatherPressTermId: item.id, gatherPressEventId: 0 };
-			
-			setAttributes( newAttrs );
-			otherSetter( [] );
-		}
-	};
-
-	// Prepare suggestions
-	const eventSuggestions = events.map( event => event.title.rendered );
-	const termSuggestions = terms.map( term => term.name );
+	// Prepare term options for ComboboxControl
+	const termOptions = terms.map( term => ({
+		value: term.id,
+		label: term.name
+	}) );
 
 	// Determine date source
 	const isContextDate = isEventContext && contextEventDate && ! gatherPressEventId && ! gatherPressTermId && targetDateTime === contextEventDate;
 	const isManualDate = targetDateTime && ! gatherPressEventId && ! gatherPressTermId && ! isContextDate;
 	const isSyncedEvent = gatherPressEventId > 0;
 	const isSyncedTerm = gatherPressTermId > 0;
+
+	/**
+	 * Handle event selection change.
+	 *
+	 * @param {number|string} value - Selected event ID.
+	 */
+	const handleEventChange = ( value ) => {
+		if ( ! value ) {
+			setAttributes( { 
+				gatherPressEventId: 0,
+				gatherPressTaxonomy: '',
+				gatherPressTermId: 0
+			} );
+			return;
+		}
+
+		const eventId = parseInt( value, 10 );
+		setAttributes( { 
+			gatherPressEventId: eventId,
+			gatherPressTaxonomy: '',
+			gatherPressTermId: 0
+		} );
+	};
+
+	/**
+	 * Handle term selection change.
+	 *
+	 * @param {number|string} value - Selected term ID.
+	 */
+	const handleTermChange = ( value ) => {
+		if ( ! value ) {
+			setAttributes( { 
+				gatherPressTermId: 0,
+				gatherPressEventId: 0
+			} );
+			return;
+		}
+
+		const termId = parseInt( value, 10 );
+		setAttributes( { 
+			gatherPressTermId: termId,
+			gatherPressEventId: 0
+		} );
+	};
 
 	/**
 	 * Render event selector dropdown content.
@@ -609,24 +601,27 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 		
 		return (
 			<>
-				<FormTokenField
+				<ComboboxControl
 					label={ __( 'Select an event', 'gatherpress-countdown' ) }
-					value={ selectedEventTokens }
-					suggestions={ eventSuggestions }
-					onChange={ ( tokens ) => handleTokenChange( 
-						tokens, 
-						events, 
-						setSelectedEventTokens, 
-						'event',
-						{ gatherPressEventId: 0 },
-						setSelectedTermTokens
-					) }
-					maxSuggestions={ 10 }
-					__experimentalExpandOnFocus
-					__experimentalShowHowTo={ false }
+					value={ gatherPressEventId || null }
+					onChange={ handleEventChange }
+					options={ eventOptions }
+					allowReset
+					help={ gatherPressEventId > 0 ? __( 'Date synced with selected event', 'gatherpress-countdown' ) : '' }
 				/>
 				{ gatherPressEventId > 0 && (
-					<SyncNotice message={ __( 'Date synced with event', 'gatherpress-countdown' ) } />
+					<Button
+						isSecondary
+						isSmall
+						onClick={ () => setAttributes( { 
+						gatherPressEventId: 0,
+						gatherPressTaxonomy: '',
+						gatherPressTermId: 0
+					} ) }
+						style={{ marginTop: '8px' }}
+					>
+						{ __( 'Clear selection', 'gatherpress-countdown' ) }
+					</Button>
 				) }
 			</>
 		);
@@ -686,12 +681,13 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 				<EmptyState 
 					message={ __( 'No terms found.', 'gatherpress-countdown' ) }
 					action={
-						<ToolbarButton
+						<Button
 							isSecondary
+							isSmall
 							onClick={ () => setAttributes( { gatherPressTaxonomy: '' } ) }
 						>
 							{ __( 'Back to taxonomies', 'gatherpress-countdown' ) }
-						</ToolbarButton>
+						</Button>
 					}
 				/>
 			);
@@ -700,14 +696,14 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 		return (
 			<>
 				<div className="gatherpress-countdown-taxonomy-header">
-					<ToolbarButton
+					<Button
+						isSmall
 						icon="arrow-left-alt2"
 						onClick={ () => {
 							setAttributes( { 
 								gatherPressTaxonomy: '',
 								gatherPressTermId: 0
 							} );
-							setSelectedTermTokens( [] );
 						} }
 						label={ __( 'Back', 'gatherpress-countdown' ) }
 					/>
@@ -715,21 +711,12 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 						{ taxonomies.find( t => t.slug === gatherPressTaxonomy )?.name }
 					</span>
 				</div>
-				<FormTokenField
+				<ComboboxControl
 					label={ __( 'Select a term', 'gatherpress-countdown' ) }
-					value={ selectedTermTokens }
-					suggestions={ termSuggestions }
-					onChange={ ( tokens ) => handleTokenChange( 
-						tokens, 
-						terms, 
-						setSelectedTermTokens, 
-						'term',
-						{ gatherPressTermId: 0 },
-						setSelectedEventTokens
-					) }
-					maxSuggestions={ 10 }
-					__experimentalExpandOnFocus
-					__experimentalShowHowTo={ false }
+					value={ gatherPressTermId || null }
+					onChange={ handleTermChange }
+					options={ termOptions }
+					allowReset
 				/>
 				{ gatherPressTermId > 0 && (
 					<>
@@ -793,8 +780,6 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 										gatherPressTaxonomy: '',
 										gatherPressTermId: 0
 									} );
-									setSelectedEventTokens( [] );
-									setSelectedTermTokens( [] );
 								} }
 								is12Hour={ false }
 							/>
