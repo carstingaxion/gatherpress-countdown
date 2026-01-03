@@ -11,6 +11,8 @@
 
 Countdown timer block with real-time updates, GatherPress event integration, and context-aware date synchronization.
 
+https://github.com/user-attachments/assets/2d372d4f-950a-483b-a098-c91f69d10871
+
 ---
 
 ## Description
