@@ -104,6 +104,9 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 
 			// Validate segments
 			if ( empty( $enabled_segments ) ) {
+				if ( WP_DEBUG !== true || WP_ENVIRONMENT_TYPE !== 'local' ) {
+					return '';
+				}
 				return $this->render_placeholder(
 					__( 'Please select at least one time segment to display.', 'gatherpress-countdown' )
 				);
