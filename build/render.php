@@ -84,6 +84,9 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 
 			// Validate target date
 			if ( empty( $target_date_time ) ) {
+				if ( WP_DEBUG !== true || WP_ENVIRONMENT_TYPE !== 'local' ) {
+					return '';
+				}
 				return $this->render_placeholder(
 					__( 'Please configure the countdown timer in the editor.', 'gatherpress-countdown' )
 				);
