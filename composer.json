@@ -1,12 +1,11 @@
 {
-    "name": "figuren-theater/gatherpress-countdown",
-    "description": "... like the figuren.theater WordPress Multisite network.",
+    "name": "gatherpress/countdown",
+    "description": "Countdown timer block with real-time updates, GatherPress event integration, and context-aware date synchronization.",
     "license": "GPL-3.0+",
-    "type": "wordpress-muplugin",
+    "type": "wordpress-plugin",
     "keywords": [
         "wordpress",
-        "wordpress-plugin",
-        "wordpress-muplugin"
+        "wordpress-plugin"
     ],
     "authors": [
         {
@@ -23,8 +22,8 @@
     "homepage": "https://websites.fuer.figuren.theater",
     "support": {
         "email": "info@figuren.theater",
-        "issues": "https://github.com/figuren-theater/gatherpress-countdown/issues",
-        "source": "https://github.com/figuren-theater/gatherpress-countdown"
+        "issues": "https://github.com/carstingaxion/gatherpress-countdown/issues",
+        "source": "https://github.com/carstingaxion/gatherpress-countdown"
     },
     "require-dev": {
         "figuren-theater/code-quality": "*"
