@@ -132,6 +132,33 @@
   right: 0;
   top: 0;
 }
+.editor-styles-wrapper .gatherpress-countdown {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.editor-styles-wrapper .is-style-classic .gatherpress-countdown {
+  gap: 1.5rem;
+}
+.editor-styles-wrapper .is-style-modern .gatherpress-countdown {
+  gap: 2.5rem;
+  padding: 2rem;
+}
+.editor-styles-wrapper .is-style-minimal .gatherpress-countdown {
+  gap: 0.5em;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  line-height: 1.6;
+  font-size: inherit;
+}
+.editor-styles-wrapper .is-style-bold .gatherpress-countdown {
+  gap: 1rem;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 2rem 3rem;
+  border-radius: 16px;
+}
 .gatherpress-countdown-info-notice {
   margin-top: 16px !important;
   margin-bottom: 0 !important;

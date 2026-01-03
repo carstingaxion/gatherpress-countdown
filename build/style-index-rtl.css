@@ -17,7 +17,7 @@
   color: #757575;
   font-style: italic;
 }
-.gatherpress-countdown {
+.gatherpress-countdown .gatherpress-countdown-display {
   display: flex;
   gap: 2rem;
   justify-content: center;
@@ -43,8 +43,37 @@
   opacity: 0.7;
   font-weight: 500;
 }
+/* Screen reader only text */
+.screen-reader-text {
+  clip: rect(1px, 1px, 1px, 1px);
+  clip-path: inset(50%);
+  height: 1px;
+  width: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  word-wrap: normal !important;
+}
+/* Noscript fallback */
+.gatherpress-countdown-noscript {
+  text-align: center;
+  padding: 2rem;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+.gatherpress-countdown-noscript p {
+  margin: 0.5rem 0;
+}
+.gatherpress-countdown-noscript .gatherpress-countdown-noscript-note {
+  font-size: 0.875rem;
+  color: #757575;
+  font-style: italic;
+}
 /* Classic Style */
-.is-style-classic .gatherpress-countdown {
+.is-style-classic .gatherpress-countdown-display {
   gap: 1.5rem;
 }
 .is-style-classic .gatherpress-countdown-segment {
@@ -63,7 +92,7 @@
   font-size: 0.75rem;
 }
 /* Modern Style */
-.is-style-modern .gatherpress-countdown {
+.is-style-modern .gatherpress-countdown-display {
   gap: 2.5rem;
   padding: 2rem;
 }
@@ -102,7 +131,7 @@
   min-height: auto;
   justify-content: flex-start;
 }
-.is-style-minimal .gatherpress-countdown {
+.is-style-minimal .gatherpress-countdown-display {
   gap: 0.5em;
   justify-content: flex-start;
   flex-wrap: wrap;
@@ -137,7 +166,7 @@
   opacity: 0.7;
 }
 /* Bold Style */
-.is-style-bold .gatherpress-countdown {
+.is-style-bold .gatherpress-countdown-display {
   gap: 1rem;
   background: rgba(0, 0, 0, 0.8);
   padding: 2rem 3rem;
@@ -165,7 +194,7 @@
 }
 /* Responsive Design */
 @media (max-width: 768px) {
-  .gatherpress-countdown {
+  .gatherpress-countdown-display {
     gap: 1rem !important;
   }
   .gatherpress-countdown-number {
@@ -174,7 +203,7 @@
   .gatherpress-countdown-label {
     font-size: 0.7rem !important;
   }
-  .is-style-bold .gatherpress-countdown {
+  .is-style-bold .gatherpress-countdown-display {
     padding: 1.5rem 2rem;
   }
   .is-style-modern .gatherpress-countdown-segment::after {
@@ -190,7 +219,7 @@
   }
 }
 @media (max-width: 480px) {
-  .gatherpress-countdown {
+  .gatherpress-countdown-display {
     gap: 0.75rem !important;
   }
   .gatherpress-countdown-number {
@@ -201,7 +230,7 @@
     padding: 1rem 0.75rem !important;
   }
   /* Keep minimal style inline on small screens */
-  .is-style-minimal .gatherpress-countdown {
+  .is-style-minimal .gatherpress-countdown-display {
     gap: 0.5em !important;
   }
   .is-style-minimal .gatherpress-countdown-number {

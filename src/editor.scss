@@ -17,7 +17,6 @@
 	}
 }
 
-
 .gatherpress-countdown-gatherpress-selector,
 .gatherpress-countdown-taxonomy-selector {
 	display: flex;
@@ -156,6 +155,43 @@
 			left: 0;
 			top: 0;
 		}
+	}
+
+	// Ensure countdown segments display horizontally in editor
+	.gatherpress-countdown {
+		display: flex;
+		gap: 2rem;
+		justify-content: center;
+		align-items: center;
+		flex-wrap: wrap;
+	}
+
+	// Classic style editor preview
+	.is-style-classic .gatherpress-countdown {
+		gap: 1.5rem;
+	}
+
+	// Modern style editor preview
+	.is-style-modern .gatherpress-countdown {
+		gap: 2.5rem;
+		padding: 2rem;
+	}
+
+	// Minimal style editor preview - inline layout
+	.is-style-minimal .gatherpress-countdown {
+		gap: 0.5em;
+		justify-content: flex-start;
+		flex-wrap: wrap;
+		line-height: 1.6;
+		font-size: inherit;
+	}
+
+	// Bold style editor preview
+	.is-style-bold .gatherpress-countdown {
+		gap: 1rem;
+		background: rgba(0, 0, 0, 0.8);
+		padding: 2rem 3rem;
+		border-radius: 16px;
 	}
 }
 

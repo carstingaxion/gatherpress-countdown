@@ -213,9 +213,8 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 				'post_status'    => 'publish',
 				'gatherpress_event_query' => $mode === 'countup' ? 'past' : 'upcoming',
 				'posts_per_page' => 1,
-				'orderby'        => 'event_date',
-				// 'meta_key'       => 'gatherpress_datetime_start',
-				'order'          => $order,
+				// 'orderby'        => 'event_date',
+				// 'order'          => $order,
 				'tax_query'      => array(
 					array(
 						'taxonomy' => $taxonomy,
@@ -223,14 +222,6 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 						'terms'    => $term_id,
 					),
 				),
-				// 'meta_query'     => array(
-				// 	array(
-				// 		'key'     => 'gatherpress_datetime_start',
-				// 		'value'   => current_time( 'mysql' ),
-				// 		'compare' => $meta_compare,
-				// 		'type'    => 'DATETIME',
-				// 	),
-				// ),
 			);
 
 			$next_events = get_posts( $next_event_args );
@@ -301,6 +292,7 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 			foreach ( self::SEGMENT_ORDER as $segment ) {
 				if ( $show_segments[ $segment ] ) {
 					$enabled_segments[] = array(
+						'type'  => $segment,
 						'value' => $segment_values[ $segment ],
 						'label' => $this->get_segment_label( $segment, $segment_values[ $segment ] ),
 					);
@@ -384,6 +376,56 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		}
 
 		/**
+		 * Format target date for human-readable display.
+		 *
+		 * @param string $target_date_time Target date time.
+		 * @return string Formatted date string.
+		 */
+		private function format_target_date( string $target_date_time ): string {
+			return date_i18n(
+				get_option( 'date_format' ) . ' ' . get_option( 'time_format' ),
+				strtotime( $target_date_time )
+			);
+		}
+
+		/**
+		 * Build screen reader text for countdown.
+		 *
+		 * @param array  $enabled_segments Enabled segments list.
+		 * @param string $mode             Display mode.
+		 * @param string $target_date_time Target date time.
+		 * @return string Screen reader text.
+		 */
+		private function build_screen_reader_text( array $enabled_segments, string $mode, string $target_date_time ): string {
+			$parts = array();
+			
+			foreach ( $enabled_segments as $segment ) {
+				if ( $segment['value'] > 0 ) {
+					$parts[] = sprintf( '%d %s', $segment['value'], $segment['label'] );
+				}
+			}
+
+			$time_text = ! empty( $parts ) ? implode( ', ', $parts ) : __( 'Less than a second', 'gatherpress-countdown' );
+			$formatted_date = $this->format_target_date( $target_date_time );
+
+			if ( $mode === 'countdown' ) {
+				return sprintf(
+					/* translators: 1: time remaining, 2: target date */
+					__( 'Countdown: %1$s until %2$s', 'gatherpress-countdown' ),
+					$time_text,
+					$formatted_date
+				);
+			}
+
+			return sprintf(
+				/* translators: 1: time elapsed, 2: start date */
+				__( 'Count up: %1$s since %2$s', 'gatherpress-countdown' ),
+				$time_text,
+				$formatted_date
+			);
+		}
+
+		/**
 		 * Render the countdown timer.
 		 *
 		 * @param string $target_date_time Target date time.
@@ -408,22 +450,76 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 			// Build data attributes
 			$data_attrs = $this->build_data_attributes( $target_date_time, $mode, $show_segments );
 
-			// Build timer HTML
+			// Build screen reader text
+			$sr_text = $this->build_screen_reader_text( $enabled_segments, $mode, $target_date_time );
+
+			// Build timer HTML with semantic structure
 			$timer_html = sprintf(
-				'<div class="gatherpress-countdown" %s>',
+				'<time class="gatherpress-countdown" datetime="%s" %s role="timer" aria-live="polite" aria-atomic="true">',
+				esc_attr( $target_date_time ),
 				$data_attrs
 			);
 
+			// Add screen reader only text
+			$timer_html .= sprintf(
+				'<span class="screen-reader-text">%s</span>',
+				esc_html( $sr_text )
+			);
+
+			// Add visible segments
+			$timer_html .= '<span class="gatherpress-countdown-display" aria-hidden="true">';
 			foreach ( $enabled_segments as $segment ) {
 				$timer_html .= $this->render_segment( $segment, $show_labels );
 			}
+			$timer_html .= '</span>';
 
-			$timer_html .= '</div>';
+			$timer_html .= '</time>';
+
+			// Build noscript fallback
+			$noscript_content = $this->render_noscript_fallback( $enabled_segments, $mode, $target_date_time );
 
 			return sprintf(
-				'<div %s>%s</div>',
+				'<div %s>%s%s</div>',
 				$wrapper_attributes,
-				$timer_html
+				$timer_html,
+				$noscript_content
+			);
+		}
+
+		/**
+		 * Render noscript fallback.
+		 *
+		 * @param array  $enabled_segments Enabled segments list.
+		 * @param string $mode             Display mode.
+		 * @param string $target_date_time Target date time.
+		 * @return string Noscript HTML.
+		 */
+		private function render_noscript_fallback( array $enabled_segments, string $mode, string $target_date_time ): string {
+			$formatted_date = $this->format_target_date( $target_date_time );
+			$now = time();
+			$target = strtotime( $target_date_time );
+			$is_future = $target > $now;
+
+			if ( $mode === 'countdown' && $is_future ) {
+				$message = sprintf(
+					/* translators: %s: target date */
+					__( 'Event starts on %s', 'gatherpress-countdown' ),
+					$formatted_date
+				);
+			} elseif ( $mode === 'countup' || ! $is_future ) {
+				$message = sprintf(
+					/* translators: %s: start date */
+					__( 'Event started on %s', 'gatherpress-countdown' ),
+					$formatted_date
+				);
+			} else {
+				$message = $formatted_date;
+			}
+
+			return sprintf(
+				'<noscript><div class="gatherpress-countdown-noscript"><p><strong>%s</strong></p><p class="gatherpress-countdown-noscript-note">%s</p></div></noscript>',
+				esc_html( $message ),
+				esc_html__( 'Enable JavaScript to see the live countdown.', 'gatherpress-countdown' )
 			);
 		}
 
@@ -466,7 +562,10 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		 * @return string HTML output.
 		 */
 		private function render_segment( array $segment, bool $show_labels ): string {
-			$html  = '<div class="gatherpress-countdown-segment">';
+			$html  = sprintf(
+				'<span class="gatherpress-countdown-segment" data-type="%s">',
+				esc_attr( $segment['type'] )
+			);
 			$html .= sprintf(
 				'<span class="gatherpress-countdown-number">%s</span>',
 				esc_html( str_pad( (string) $segment['value'], 2, '0', STR_PAD_LEFT ) )
@@ -479,7 +578,7 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 				);
 			}
 
-			$html .= '</div>';
+			$html .= '</span>';
 
 			return $html;
 		}
