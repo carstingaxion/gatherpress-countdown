@@ -118,7 +118,7 @@
     }
     const segmentConfig = getSegmentConfig(timerElement);
     const timeLeft = calculateTimeDifference(targetDateTime, segmentConfig);
-    const segmentElements = timerElement.querySelectorAll('.gatherpress-countdown-segment');
+    const segmentElements = timerElement.querySelectorAll('.gatherpress-countdown__segment');
     if (segmentElements.length === 0) {
       return;
     }
@@ -140,7 +140,7 @@
         return;
       }
       const value = values[index];
-      const numberElement = segment.querySelector('.gatherpress-countdown-number');
+      const numberElement = segment.querySelector('.gatherpress-countdown__number');
       if (numberElement) {
         numberElement.textContent = formatNumber(value);
       }

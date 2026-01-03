@@ -205,16 +205,11 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		 * @return string Event date or empty string.
 		 */
 		private function get_next_event_from_term( string $taxonomy, int $term_id, string $mode ): string {
-			$meta_compare = $mode === 'countup' ? '<=' : '>=';
-			$order = $mode === 'countup' ? 'DESC' : 'ASC';
-
 			$next_event_args = array(
 				'post_type'      => 'gatherpress_event',
 				'post_status'    => 'publish',
 				'gatherpress_event_query' => $mode === 'countup' ? 'past' : 'upcoming',
 				'posts_per_page' => 1,
-				// 'orderby'        => 'event_date',
-				// 'order'          => $order,
 				'tax_query'      => array(
 					array(
 						'taxonomy' => $taxonomy,
@@ -365,11 +360,11 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		 */
 		private function render_placeholder( string $message ): string {
 			$wrapper_attributes = get_block_wrapper_attributes(
-				array( 'class' => 'gatherpress-countdown-wrapper' )
+				array( 'class' => 'wp-block-gatherpress-countdown' )
 			);
 
 			return sprintf(
-				'<div %1$s><div class="gatherpress-countdown-placeholder"><p>%2$s</p></div></div>',
+				'<div %1$s><div class="gatherpress-countdown__placeholder"><p>%2$s</p></div></div>',
 				$wrapper_attributes,
 				esc_html( $message )
 			);
@@ -444,7 +439,7 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		): string {
 			// Build wrapper attributes
 			$wrapper_attributes = get_block_wrapper_attributes(
-				array( 'class' => 'gatherpress-countdown-wrapper' )
+				array( 'class' => 'wp-block-gatherpress-countdown' )
 			);
 
 			// Build data attributes
@@ -453,7 +448,7 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 			// Build screen reader text
 			$sr_text = $this->build_screen_reader_text( $enabled_segments, $mode, $target_date_time );
 
-			// Build timer HTML with semantic structure
+			// Build timer HTML with semantic structure and BEM classes
 			$timer_html = sprintf(
 				'<time class="gatherpress-countdown" datetime="%s" %s role="timer" aria-live="polite" aria-atomic="true">',
 				esc_attr( $target_date_time ),
@@ -467,7 +462,7 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 			);
 
 			// Add visible segments
-			$timer_html .= '<span class="gatherpress-countdown-display" aria-hidden="true">';
+			$timer_html .= '<span class="gatherpress-countdown__display" aria-hidden="true">';
 			foreach ( $enabled_segments as $segment ) {
 				$timer_html .= $this->render_segment( $segment, $show_labels );
 			}
@@ -517,7 +512,7 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 			}
 
 			return sprintf(
-				'<noscript><div class="gatherpress-countdown-noscript"><p><strong>%s</strong></p><p class="gatherpress-countdown-noscript-note">%s</p></div></noscript>',
+				'<noscript><div class="gatherpress-countdown__noscript"><p><strong>%s</strong></p><p class="gatherpress-countdown__noscript-note">%s</p></div></noscript>',
 				esc_html( $message ),
 				esc_html__( 'Enable JavaScript to see the live countdown.', 'gatherpress-countdown' )
 			);
@@ -563,17 +558,17 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		 */
 		private function render_segment( array $segment, bool $show_labels ): string {
 			$html  = sprintf(
-				'<span class="gatherpress-countdown-segment" data-type="%s">',
+				'<span class="gatherpress-countdown__segment" data-type="%s">',
 				esc_attr( $segment['type'] )
 			);
 			$html .= sprintf(
-				'<span class="gatherpress-countdown-number">%s</span>',
+				'<span class="gatherpress-countdown__number">%s</span>',
 				esc_html( str_pad( (string) $segment['value'], 2, '0', STR_PAD_LEFT ) )
 			);
 
 			if ( $show_labels ) {
 				$html .= sprintf(
-					'<span class="gatherpress-countdown-label">%s</span>',
+					'<span class="gatherpress-countdown__label">%s</span>',
 					esc_html( $segment['label'] )
 				);
 			}

@@ -882,23 +882,25 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 					/>
 				) }
 				{ ! targetDateTime ? (
-					<div className="gatherpress-countdown-placeholder">
+					<div className="gatherpress-countdown__placeholder">
 						<p>{ __( 'Select a date and time using the toolbar buttons above.', 'gatherpress-countdown' ) }</p>
 					</div>
 				) : segments.length === 0 ? (
-					<div className="gatherpress-countdown-placeholder">
+					<div className="gatherpress-countdown__placeholder">
 						<p>{ __( 'Please select at least one time segment to display.', 'gatherpress-countdown' ) }</p>
 					</div>
 				) : (
 					<div className="gatherpress-countdown" data-mode={ mode }>
-						{ segments.map( ( segment, index ) => (
-							<div key={ index } className="gatherpress-countdown-segment">
-								<span className="gatherpress-countdown-number">{ formatNumber( segment.value ) }</span>
-								{ showLabels && (
-									<span className="gatherpress-countdown-label">{ segment.label }</span>
-								) }
-							</div>
-						) ) }
+						<div className="gatherpress-countdown__display">
+							{ segments.map( ( segment, index ) => (
+								<div key={ index } className="gatherpress-countdown__segment">
+									<span className="gatherpress-countdown__number">{ formatNumber( segment.value ) }</span>
+									{ showLabels && (
+										<span className="gatherpress-countdown__label">{ segment.label }</span>
+									) }
+								</div>
+							) ) }
+						</div>
 					</div>
 				) }
 			</div>

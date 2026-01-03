@@ -905,28 +905,31 @@ function Edit({
         emoji: "\uD83C\uDFF7\uFE0F",
         message: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Synced with next event in: ', 'gatherpress-countdown') + terms.find(t => t.id === gatherPressTermId)?.name
       }), !targetDateTime ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("div", {
-        className: "gatherpress-countdown-placeholder",
+        className: "gatherpress-countdown__placeholder",
         children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("p", {
           children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select a date and time using the toolbar buttons above.', 'gatherpress-countdown')
         })
       }) : segments.length === 0 ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("div", {
-        className: "gatherpress-countdown-placeholder",
+        className: "gatherpress-countdown__placeholder",
         children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("p", {
           children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Please select at least one time segment to display.', 'gatherpress-countdown')
         })
       }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("div", {
         className: "gatherpress-countdown",
         "data-mode": mode,
-        children: segments.map((segment, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxs)("div", {
-          className: "gatherpress-countdown-segment",
-          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("span", {
-            className: "gatherpress-countdown-number",
-            children: formatNumber(segment.value)
-          }), showLabels && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("span", {
-            className: "gatherpress-countdown-label",
-            children: segment.label
-          })]
-        }, index))
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("div", {
+          className: "gatherpress-countdown__display",
+          children: segments.map((segment, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxs)("div", {
+            className: "gatherpress-countdown__segment",
+            children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("span", {
+              className: "gatherpress-countdown__number",
+              children: formatNumber(segment.value)
+            }), showLabels && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("span", {
+              className: "gatherpress-countdown__label",
+              children: segment.label
+            })]
+          }, index))
+        })
       })]
     })]
   });
