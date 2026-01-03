@@ -408,6 +408,8 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 		gatherPressTermId,
 		mode,
 		autoMode,
+		eventMode,
+		taxonomyMode,
 		showLabels,
 		showYears,
 		showMonths,
@@ -445,10 +447,10 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 
 	// Fetch all data using custom hooks
 	const contextEventDate = useContextEventDate( contextPostId, contextPostType, isEventContext );
-	const { events, isLoadingEvents } = useGatherPressEvents( mode );
+	const { events, isLoadingEvents } = useGatherPressEvents( eventMode );
 	const { taxonomies, isLoadingTaxonomies } = useGatherPressTaxonomies();
 	const { terms, isLoadingTerms } = useTaxonomyTerms( gatherPressTaxonomy );
-	const { nextEventFromTerm, isLoadingNextEvent } = useNextEventFromTerm( gatherPressTaxonomy, gatherPressTermId, mode );
+	const { nextEventFromTerm, isLoadingNextEvent } = useNextEventFromTerm( gatherPressTaxonomy, gatherPressTermId, taxonomyMode );
 	const selectedEvent = useGatherPressEvent( gatherPressEventId );
 
 	// Determine which source is active
@@ -494,17 +496,17 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 		return () => clearInterval( interval );
 	}, [ targetDateTime, showYears, showMonths, showWeeks, showDays, showHours, showMinutes, showSeconds ] );
 
-	// Auto-detect mode based on target date (only if autoMode is enabled and using countdown mode)
+	// Auto-detect mode based on target date (only if autoMode is enabled and using manual date)
 	useEffect( () => {
-		if ( targetDateTime && autoMode && mode === 'countdown' ) {
+		if ( targetDateTime && autoMode && isManualDate ) {
 			const newMode = timeLeft.total < 0 ? 'countup' : 'countdown';
 			if ( newMode !== mode ) {
 				setAttributes( { mode: newMode } );
 			}
 		}
-	}, [ targetDateTime, timeLeft.total, mode, autoMode, setAttributes ] );
+	}, [ targetDateTime, timeLeft.total, mode, autoMode, isManualDate, setAttributes ] );
 
-	// Update block name with target date
+	// Update block name with target date and current mode
 	useEffect( () => {
 		if ( targetDateTime && updateBlockAttributes ) {
 			const formattedDate = dateI18n( dateTimeFormat, targetDateTime );
@@ -607,14 +609,36 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 		}
 		
 		return (
-			<ComboboxControl
-				label={ __( 'Select an event', 'gatherpress-countdown' ) }
-				value={ gatherPressEventId || null }
-				onChange={ handleEventChange }
-				options={ eventOptions }
-				allowReset
-				help={ gatherPressEventId > 0 ? __( 'Date synced with selected event', 'gatherpress-countdown' ) : '' }
-			/>
+			<>
+				<RadioControl
+					label={ __( 'Display mode', 'gatherpress-countdown' ) }
+					selected={ eventMode }
+					options={ [
+						{ label: __( 'Countdown (time until event)', 'gatherpress-countdown' ), value: 'countdown' },
+						{ label: __( 'Count up (time since event)', 'gatherpress-countdown' ), value: 'countup' },
+					] }
+					onChange={ ( value ) => setAttributes( { eventMode: value, mode: value } ) }
+				/>
+				<ComboboxControl
+					label={ __( 'Select an event', 'gatherpress-countdown' ) }
+					value={ gatherPressEventId || null }
+					onChange={ handleEventChange }
+					options={ eventOptions }
+					allowReset
+					help={ gatherPressEventId > 0 && selectedEvent ? 
+						__( 'Synced with event: ', 'gatherpress-countdown' ) + selectedEvent.title.rendered : 
+						''
+					}
+				/>
+				{ gatherPressEventId > 0 && eventMode === 'countdown' && (
+					<ToggleControl
+						label={ __( 'Automatic mode switching', 'gatherpress-countdown' ) }
+						checked={ autoMode }
+						onChange={ ( value ) => setAttributes( { autoMode: value } ) }
+						help={ __( 'Automatically switch from countdown to count-up when the event date is reached.', 'gatherpress-countdown' ) }
+					/>
+				) }
+			</>
 		);
 	};
 
@@ -702,6 +726,15 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 						{ taxonomies.find( t => t.slug === gatherPressTaxonomy )?.name }
 					</span>
 				</div>
+				<RadioControl
+					label={ __( 'Display mode', 'gatherpress-countdown' ) }
+					selected={ taxonomyMode }
+					options={ [
+						{ label: __( 'Countdown (time until event)', 'gatherpress-countdown' ), value: 'countdown' },
+						{ label: __( 'Count up (time since event)', 'gatherpress-countdown' ), value: 'countup' },
+					] }
+					onChange={ ( value ) => setAttributes( { taxonomyMode: value, mode: value } ) }
+				/>
 				<ComboboxControl
 					label={ __( 'Select a term', 'gatherpress-countdown' ) }
 					value={ gatherPressTermId || null }
@@ -714,10 +747,31 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 						{ isLoadingNextEvent ? (
 							<LoadingState message={ __( 'Finding next event...', 'gatherpress-countdown' ) } />
 						) : nextEventFromTerm ? (
-							<SyncNotice message={ __( 'Using next event: ', 'gatherpress-countdown' ) + nextEventFromTerm.title.rendered } />
+							<>
+								<SyncNotice 
+									message={ 
+										taxonomyMode === 'countdown' 
+											? __( 'Using next event: ', 'gatherpress-countdown' ) + nextEventFromTerm.title.rendered
+											: __( 'Using last event: ', 'gatherpress-countdown' ) + nextEventFromTerm.title.rendered
+									} 
+								/>
+								{ taxonomyMode === 'countdown' && (
+									<ToggleControl
+										label={ __( 'Automatic mode switching', 'gatherpress-countdown' ) }
+										checked={ autoMode }
+										onChange={ ( value ) => setAttributes( { autoMode: value } ) }
+										help={ __( 'Automatically switch from countdown to count-up when the event date is reached.', 'gatherpress-countdown' ) }
+									/>
+								) }
+							</>
 						) : (
 							<Notice status="warning" isDismissible={ false }>
-								<p>{ __( 'No upcoming events found in this term.', 'gatherpress-countdown' ) }</p>
+								<p>
+									{ taxonomyMode === 'countdown' 
+										? __( 'No upcoming events found in this term.', 'gatherpress-countdown' )
+										: __( 'No past events found in this term.', 'gatherpress-countdown' )
+									}
+								</p>
 							</Notice>
 						) }
 					</>
@@ -746,19 +800,31 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 							/>
 						) }
 						renderContent={ () => (
-							<DateTimePicker
-								currentDate={ targetDateTime || null }
-								onChange={ ( newDateTime ) => {
-									setAttributes( { 
-										targetDateTime: newDateTime,
-										gatherPressEventId: 0,
-										gatherPressTaxonomy: '',
-										gatherPressTermId: 0
-									} );
-									setOpenDropdown( null );
-								} }
-								is12Hour={ false }
-							/>
+							<>
+								<DateTimePicker
+									currentDate={ targetDateTime || null }
+									onChange={ ( newDateTime ) => {
+										setAttributes( { 
+											targetDateTime: newDateTime,
+											gatherPressEventId: 0,
+											gatherPressTaxonomy: '',
+											gatherPressTermId: 0
+										} );
+										setOpenDropdown( null );
+									} }
+									is12Hour={ false }
+								/>
+								{ targetDateTime && isManualDate && (
+									<div style={{ padding: '16px', borderTop: '1px solid #ddd' }}>
+										<ToggleControl
+											label={ __( 'Automatic mode switching', 'gatherpress-countdown' ) }
+											checked={ autoMode }
+											onChange={ ( value ) => setAttributes( { autoMode: value } ) }
+											help={ __( 'Automatically switch from countdown to count-up when the target date is reached.', 'gatherpress-countdown' ) }
+										/>
+									</div>
+								) }
+							</>
 						) }
 					/>
 					<Dropdown
@@ -808,24 +874,6 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 
 			<InspectorControls>
 				<PanelBody title={ __( 'Display Settings', 'gatherpress-countdown' ) }>
-					<RadioControl
-						label={ __( 'Display mode', 'gatherpress-countdown' ) }
-						help={ __( 'Choose how to display time.', 'gatherpress-countdown' ) }
-						selected={ mode }
-						options={ [
-							{ label: __( 'Countdown (time until event)', 'gatherpress-countdown' ), value: 'countdown' },
-							{ label: __( 'Count up (time since event)', 'gatherpress-countdown' ), value: 'countup' },
-						] }
-						onChange={ ( value ) => setAttributes( { mode: value } ) }
-					/>
-					{ mode === 'countdown' && (
-						<ToggleControl
-							label={ __( 'Automatic mode switching', 'gatherpress-countdown' ) }
-							checked={ autoMode }
-							onChange={ ( value ) => setAttributes( { autoMode: value } ) }
-							help={ __( 'Automatically switch from countdown to count-up when the target date is reached.', 'gatherpress-countdown' ) }
-						/>
-					) }
 					<ToggleControl
 						label={ __( 'Show labels', 'gatherpress-countdown' ) }
 						checked={ showLabels }
@@ -866,18 +914,19 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 						variant="gatherpress-countdown-context-indicator"
 					/>
 				) }
-				{ isSyncedEvent && (
+				{ isSyncedEvent && selectedEvent && (
 					<EventIndicator 
 						emoji="🎟️" 
-						message={ __( 'Synced with event', 'gatherpress-countdown' ) }
+						message={ __( 'Synced with event: ', 'gatherpress-countdown' ) + selectedEvent.title.rendered }
 					/>
 				) }
-				{ isSyncedTerm && (
+				{ isSyncedTerm && nextEventFromTerm && (
 					<EventIndicator 
 						emoji="🏷️" 
 						message={ 
-							__( 'Synced with next event in: ', 'gatherpress-countdown' ) +
-							terms.find( t => t.id === gatherPressTermId )?.name 
+							taxonomyMode === 'countdown'
+								? __( 'Using next event: ', 'gatherpress-countdown' ) + nextEventFromTerm.title.rendered
+								: __( 'Using last event: ', 'gatherpress-countdown' ) + nextEventFromTerm.title.rendered
 						}
 					/>
 				) }
