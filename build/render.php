@@ -297,7 +297,9 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		}
 
 		/**
-		 * Get label for time segment.
+		 * Get label for time segment using core WordPress translations.
+		 *
+		 * Uses the 'default' textdomain to leverage WordPress core translations.
 		 *
 		 * @param string $type  Segment type.
 		 * @param int    $value Segment value.
@@ -371,16 +373,17 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		}
 
 		/**
-		 * Format target date for human-readable display.
+		 * Format target date for human-readable display using wp_date.
 		 *
 		 * @param string $target_date_time Target date time.
 		 * @return string Formatted date string.
 		 */
 		private function format_target_date( string $target_date_time ): string {
-			return date_i18n(
-				get_option( 'date_format' ) . ' ' . get_option( 'time_format' ),
-				strtotime( $target_date_time )
-			);
+			$timestamp = strtotime( $target_date_time );
+			$date_format = get_option( 'date_format' );
+			$time_format = get_option( 'time_format' );
+			
+			return (string) wp_date( $date_format . ' ' . $time_format, $timestamp );
 		}
 
 		/**
