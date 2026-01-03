@@ -11,13 +11,15 @@
 
 Countdown timer block with real-time updates, GatherPress event integration, and context-aware date synchronization.
 
-https://github.com/user-attachments/assets/2d372d4f-950a-483b-a098-c91f69d10871
+[![Playground Demo Link](https://img.shields.io/badge/WordPress_Playground-blue?logo=wordpress&logoColor=%23fff&labelColor=%233858e9&color=%233858e9)](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/carstingaxion/gatherpress-countdown/main/.wordpress-org/blueprints/blueprint.json)
 
 ---
 
 ## Description
 
 GatherPress Countdown displays time remaining until future events or elapsed time since past events. Built specifically for theater productions and GatherPress event management, it provides flexible date selection and automatic synchronization.
+
+https://github.com/user-attachments/assets/2d372d4f-950a-483b-a098-c91f69d10871
 
 ---
 
