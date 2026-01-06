@@ -5,7 +5,7 @@
  * Version:           0.1.0
  * Requires at least: 6.4
  * Requires PHP:      7.4
- * Author:            cb + WordPress Telex
+ * Author:            carstenbach & WordPress Telex
  * License:           GPLv2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       gatherpress-countdown
@@ -49,13 +49,6 @@ class Plugin {
 	private string $plugin_dir;
 
 	/**
-	 * Plugin directory URL.
-	 *
-	 * @var string
-	 */
-	private string $plugin_url;
-
-	/**
 	 * Get the singleton instance.
 	 *
 	 * @return Plugin The singleton instance.
@@ -72,8 +65,6 @@ class Plugin {
 	 */
 	private function __construct() {
 		$this->plugin_dir = plugin_dir_path( __FILE__ );
-		$this->plugin_url = plugin_dir_url( __FILE__ );
-		
 		add_action( 'init', array( $this, 'register_block' ) );
 	}
 
