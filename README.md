@@ -1,6 +1,6 @@
 # GatherPress Countdown
 
-**Contributors:** cb + WordPress Telex  
+**Contributors:** carstenbach & WordPress Telex  
 **Tags:** block, countdown, timer, gatherpress, event, theater, performance  
 **Tested up to:** 6.8  
 **Stable tag:** 0.1.0  
@@ -19,6 +19,8 @@ Countdown timer block with real-time updates, GatherPress event integration, and
 
 GatherPress Countdown displays time remaining until future events or elapsed time since past events. Built specifically for theater productions and GatherPress event management, it provides flexible date selection and automatic synchronization.
 
+![Display countdown to an explicit GatherPress event, "Hamlet – Evening Performance" in this case, using the default block style.](.wordpress-org/screenshot-3.png)
+
 https://github.com/user-attachments/assets/2d372d4f-950a-483b-a098-c91f69d10871
 
 ---
@@ -27,10 +29,10 @@ https://github.com/user-attachments/assets/2d372d4f-950a-483b-a098-c91f69d10871
 
 ### Date Selection Methods
 
-- Manual date/time picker with minute and second precision  
-- Direct GatherPress event selection  
-- Taxonomy-based next event selection  
-- Automatic context inheritance from event posts  
+- Manual date & time picker
+- Select a GatherPress event
+- Use next & last from GatherPress Taxonomy, like Topics or venues
+- Automatic context inheritance from Gatherpress events
 
 ### Time Display
 
@@ -49,22 +51,9 @@ https://github.com/user-attachments/assets/2d372d4f-950a-483b-a098-c91f69d10871
 
 ### Technical Implementation
 
-- Singleton pattern for efficient resource management  
-- Complete PHP type hints and DocBlocks  
 - WordPress coding standards compliance  
 - Full `theme.json` support for customization  
 - Context-aware rendering in query loops and templates  
-- Proper escaping and sanitization throughout  
-
----
-
-## Installation
-
-1. Upload plugin files to `/wp-content/plugins/gatherpress-countdown/`  
-2. Activate through the WordPress Plugins screen  
-3. Add the **Countdown Timer** block to posts, pages, or templates  
-4. Configure using toolbar date selection options  
-5. Customize appearance through block styles or `theme.json`  
 
 ---
 
@@ -83,6 +72,9 @@ https://github.com/user-attachments/assets/2d372d4f-950a-483b-a098-c91f69d10871
 6. Result: `05 Days 03 Hours 42 Minutes` updating in real time  
 
 The countdown automatically switches to count-up mode after the curtain rises, showing time elapsed since opening.
+
+![Display countdown to a manual set date, with Days, Hours and Minutes enabled, showing 05 Days 17 Hours 46 Minutes.](.wordpress-org/screenshot-1.png)
+
 </details>
 
 <details>
@@ -98,6 +90,9 @@ The countdown automatically switches to count-up mode after the curtain rises, s
 6. As deadline approaches, automatically displays `3 Days 14 Hours`  
 
 Segments cascade intelligently—if weeks reach zero, days expand to show full count.
+
+![Display countdown to a manual set date, with Weeks, Days and Hours enabled, showing 07 Weeks 01 Day 17 Hours.](.wordpress-org/screenshot-2.png)
+
 </details>
 
 <details>
@@ -113,6 +108,9 @@ Segments cascade intelligently—if weeks reach zero, days expand to show full c
 6. Update the event date in GatherPress — countdown updates automatically  
 
 This maintains a single source of truth for event dates.
+
+![Display countdown to an explicit GatherPress event, "Hamlet – Evening Performance" in this case, using the default block style.](.wordpress-org/screenshot-3.png)
+
 </details>
 
 <details>
@@ -120,15 +118,16 @@ This maintains a single source of truth for event dates.
 
 **Scenario:** Display countdown to the next performance at a specific venue.
 
-1. Ensure GatherPress events use the **Venues** taxonomy  
-2. Tag productions with a venue (e.g., “Main Stage Theater”)  
-3. Add Countdown Timer block to the venue page  
-4. Click the taxonomy icon (🏷️) in the toolbar  
-5. Select **Venues** taxonomy  
-6. Select **Main Stage Theater** term  
-7. Block displays countdown to the next chronological event at that venue  
+1. Add Countdown Timer block to a post or page  
+2. Click the taxonomy icon (🏷️) in the toolbar  
+3. Select **Venues** taxonomy  
+4. Select **Main Stage Theater** term  
+5. Block displays countdown to the next chronological event at that venue  
 
 The block updates automatically as performances conclude.
+
+![Display countdown to the next GatherPress event in a selected Venue, which is a GatherPress taxonomy.](.wordpress-org/screenshot-4.png)
+
 </details>
 
 <details>
@@ -228,13 +227,14 @@ Three methods:
 
 1. Calendar icon in toolbar for manual date/time  
 2. Event icon to select a GatherPress event  
-3. Taxonomy icon to use the next event from a term  
+3. Taxonomy icon to use the next or last event from a term  
 
 Blocks in event context inherit dates automatically.
 
 ### What happens when the countdown reaches zero?
 
 The block switches automatically to count-up mode, displaying elapsed time since the target date.
+You can disable the *Automatic Mode Switching* within the block, if you like.
 
 ### How does segment cascading work?
 
@@ -266,7 +266,7 @@ Yes:
 
 ### Does it work in query loops?
 
-Yes. Each event in the loop renders its own countdown from context.
+Yes. Each event in the loop renders its own countdown from context, as long as it is a `gatherpress_event`.
 
 ### What about page caching?
 
@@ -275,6 +275,7 @@ Initial HTML is server-rendered; JavaScript recalculates time on load and update
 ### Can I use it without GatherPress?
 
 Yes. Manual date selection works independently of GatherPress.
+*(But I haven't tested it.)*
 
 ### How precise are the calculations?
 
@@ -303,6 +304,16 @@ Updates every second and accounts for:
 
 ---
 
+## Installation
+
+1. Upload plugin files to `/wp-content/plugins/gatherpress-countdown/`  
+2. Activate through the WordPress Plugins screen  
+3. Add the **Countdown Timer** block to posts, pages, or templates  
+4. Configure using the toolbar date selection options  
+5. Customize appearance through block styles or `theme.json`  
+
+---
+
 ## Changelog
 
 ### 0.1.0
@@ -321,11 +332,4 @@ Updates every second and accounts for:
 - Singleton architecture  
 - Full `theme.json` integration  
 
----
-
-## Upgrade Notice
-
-### 0.1.0
-
-Initial release of GatherPress Countdown block with comprehensive countdown/count-up functionality, GatherPress integration, and context-aware date synchronization.
 
