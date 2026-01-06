@@ -289,18 +289,10 @@ Updates every second and accounts for:
 
 ## Screenshots
 
-1. Block toolbar with date selection methods  
-2. Manual datetime picker with seconds  
-3. GatherPress event selector  
-4. Taxonomy selector  
-5. Inspector panel segment toggles  
-6. Classic style countdown  
-7. Modern style with colons  
-8. Minimal style  
-9. Bold style  
-10. Context-aware event template display  
-11. Multiple countdowns in query loop  
-12. Count-up mode display  
+1. Display countdown to a manual set date, with Days, Hours and Minutes enabled, using the Bold block style  
+2. Display countdown to a manual set date, with Weeks, Days and Hours enabled, using the Modern block style
+3. Display countdown to an explicit GatherPress event, "Hamlet – Evening Performance" in this case, using the default block style.
+4. Display countdown to the next GatherPress event in a selected Venue, which is a GatherPress taxonomy.
 
 ---
 
