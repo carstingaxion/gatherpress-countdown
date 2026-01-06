@@ -15,15 +15,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/**
- * Countdown Timer Block Renderer Singleton Class
- *
- * Handles rendering of countdown timer blocks on the frontend.
- *
- * @since 0.1.0
- */
 if ( ! class_exists( Block_Renderer::class ) ) {
-	final class Block_Renderer {
+	/**
+	 * Countdown Timer Block Renderer Singleton Class
+	 *
+	 * Handles rendering of countdown timer blocks on the frontend.
+	 *
+	 * @since 0.1.0
+	 */
+	class Block_Renderer {
 		/**
 		 * Single instance of the class.
 		 *
@@ -79,10 +79,10 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		 * @return string Rendered block HTML.
 		 */
 		public function render( array $attributes, string $content, WP_Block $block ): string {
-			// Get target date from various sources
+			// Get target date from various sources.
 			$target_date_time = $this->get_target_date( $attributes, $block );
 
-			// Validate target date
+			// Validate target date.
 			if ( empty( $target_date_time ) ) {
 				if ( WP_DEBUG !== true || WP_ENVIRONMENT_TYPE !== 'local' ) {
 					return '';
@@ -92,17 +92,17 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 				);
 			}
 
-			// Get display settings
+			// Get display settings.
 			$show_labels   = $this->get_attr( $attributes, 'showLabels', true );
 			$show_segments = $this->get_show_segments( $attributes );
 
-			// Calculate segments
+			// Calculate segments.
 			$segment_values = $this->calculate_segments( $target_date_time, $show_segments );
 
-			// Build enabled segments list
+			// Build enabled segments list.
 			$enabled_segments = $this->build_enabled_segments( $show_segments, $segment_values );
 
-			// Validate segments
+			// Validate segments.
 			if ( empty( $enabled_segments ) ) {
 				if ( WP_DEBUG !== true || WP_ENVIRONMENT_TYPE !== 'local' ) {
 					return '';
@@ -112,10 +112,10 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 				);
 			}
 
-			// Determine mode
+			// Determine mode.
 			$actual_mode = $this->determine_mode( $attributes, $target_date_time );
 
-			// Render the timer
+			// Render the timer.
 			return $this->render_timer(
 				$target_date_time,
 				$actual_mode,
@@ -128,13 +128,13 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		/**
 		 * Get attribute with default fallback.
 		 *
-		 * @param array  $attributes Attributes array.
-		 * @param string $key        Attribute key.
-		 * @param mixed  $default    Default value.
+		 * @param array  $attributes    Attributes array.
+		 * @param string $key           Attribute key.
+		 * @param mixed  $default_value Default value.
 		 * @return mixed Attribute value or default.
 		 */
-		private function get_attr( array $attributes, string $key, $default ) {
-			return $attributes[ $key ] ?? $default;
+		private function get_attr( array $attributes, string $key, $default_value ) {
+			return $attributes[ $key ] ?? $default_value;
 		}
 
 		/**
@@ -150,22 +150,22 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 			$gatherpress_taxonomy = $this->get_attr( $attributes, 'gatherPressTaxonomy', '' );
 			$gatherpress_term_id  = $this->get_attr( $attributes, 'gatherPressTermId', 0 );
 
-			// Check context date
+			// Check context date.
 			$context_date = $this->get_context_date( $block, $target_date_time, $gatherpress_event_id, $gatherpress_term_id );
 			if ( ! empty( $context_date ) ) {
 				return $context_date;
 			}
 
-			// Check term event
+			// Check term event.
 			if ( $gatherpress_term_id > 0 && ! empty( $gatherpress_taxonomy ) ) {
-				$taxonomy_mode = $this->get_attr( $attributes, 'taxonomyMode', 'countdown' );
+				$taxonomy_mode   = $this->get_attr( $attributes, 'taxonomyMode', 'countdown' );
 				$term_event_date = $this->get_next_event_from_term( $gatherpress_taxonomy, $gatherpress_term_id, $taxonomy_mode );
 				if ( ! empty( $term_event_date ) ) {
 					return $term_event_date;
 				}
 			}
 
-			// Check explicit event
+			// Check explicit event.
 			if ( $gatherpress_event_id > 0 ) {
 				$event_date = get_post_meta( $gatherpress_event_id, 'gatherpress_datetime_start', true );
 				if ( ! empty( $event_date ) ) {
@@ -212,11 +212,13 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		 */
 		private function get_next_event_from_term( string $taxonomy, int $term_id, string $mode ): string {
 			$next_event_args = array(
-				'post_type'      => 'gatherpress_event',
-				'post_status'    => 'publish',
+				'post_type'               => 'gatherpress_event',
+				'post_status'             => 'publish',
 				'gatherpress_event_query' => $mode === 'countup' ? 'past' : 'upcoming',
-				'posts_per_page' => 1,
-				'tax_query'      => array(
+				'order'                   => $mode === 'countup' ? 'asc' : 'desc',
+				'posts_per_page'          => 1,
+				'fields'                  => 'ids',
+				'tax_query'               => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
 					array(
 						'taxonomy' => $taxonomy,
 						'field'    => 'term_id',
@@ -226,9 +228,8 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 			);
 
 			$next_events = get_posts( $next_event_args );
-
 			if ( ! empty( $next_events ) ) {
-				$event_date = get_post_meta( $next_events[0]->ID, 'gatherpress_datetime_start', true );
+				$event_date = get_post_meta( $next_events[0], 'gatherpress_datetime_start', true );
 				if ( ! empty( $event_date ) ) {
 					return $event_date;
 				}
@@ -313,13 +314,13 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		 */
 		private function get_segment_label( string $type, int $value ): string {
 			$labels = array(
-				'years'   => $value === 1 ? __( 'Year' ) : __( 'Years' ),
-				'months'  => $value === 1 ? __( 'Month' ) : __( 'Months' ),
-				'weeks'   => $value === 1 ? __( 'Week' ) : __( 'Weeks' ),
-				'days'    => $value === 1 ? __( 'Day' ) : __( 'Days' ),
-				'hours'   => $value === 1 ? __( 'Hour' ) : __( 'Hours' ),
-				'minutes' => $value === 1 ? __( 'Minute' ) : __( 'Minutes' ),
-				'seconds' => $value === 1 ? __( 'Second' ) : __( 'Seconds' ),
+				'years'   => $value === 1 ? __( 'Year', 'default' ) : __( 'Years', 'default' ),
+				'months'  => $value === 1 ? __( 'Month', 'default' ) : __( 'Months', 'default' ),
+				'weeks'   => $value === 1 ? __( 'Week', 'default' ) : __( 'Weeks', 'default' ),
+				'days'    => $value === 1 ? __( 'Day', 'default' ) : __( 'Days', 'default' ),
+				'hours'   => $value === 1 ? __( 'Hour', 'default' ) : __( 'Hours', 'default' ),
+				'minutes' => $value === 1 ? __( 'Minute', 'default' ) : __( 'Minutes', 'default' ),
+				'seconds' => $value === 1 ? __( 'Second', 'default' ) : __( 'Seconds', 'default' ),
 			);
 			return $labels[ $type ] ?? '';
 		}
@@ -332,29 +333,29 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		 * @return string Mode ('countdown' or 'countup').
 		 */
 		private function determine_mode( array $attributes, string $target_date_time ): string {
-			$auto_mode      = $this->get_attr( $attributes, 'autoMode', true );
-			$event_mode     = $this->get_attr( $attributes, 'eventMode', 'countdown' );
-			$taxonomy_mode  = $this->get_attr( $attributes, 'taxonomyMode', 'countdown' );
-			$event_id       = $this->get_attr( $attributes, 'gatherPressEventId', 0 );
-			$term_id        = $this->get_attr( $attributes, 'gatherPressTermId', 0 );
-			$explicit_mode  = $this->get_attr( $attributes, 'mode', 'countdown' );
+			$auto_mode     = $this->get_attr( $attributes, 'autoMode', true );
+			$event_mode    = $this->get_attr( $attributes, 'eventMode', 'countdown' );
+			$taxonomy_mode = $this->get_attr( $attributes, 'taxonomyMode', 'countdown' );
+			$event_id      = $this->get_attr( $attributes, 'gatherPressEventId', 0 );
+			$term_id       = $this->get_attr( $attributes, 'gatherPressTermId', 0 );
+			$explicit_mode = $this->get_attr( $attributes, 'mode', 'countdown' );
 
-			// If using event mode, use the explicitly set event mode
+			// If using event mode, use the explicitly set event mode.
 			if ( $event_id > 0 ) {
 				return $event_mode;
 			}
 
-			// If using taxonomy mode, use the explicitly set taxonomy mode
+			// If using taxonomy mode, use the explicitly set taxonomy mode.
 			if ( $term_id > 0 ) {
 				return $taxonomy_mode;
 			}
 
-			// If auto mode is disabled, use the current explicit mode
+			// If auto mode is disabled, use the current explicit mode.
 			if ( ! $auto_mode ) {
 				return $explicit_mode;
 			}
 
-			// Auto mode is enabled - determine based on target date
+			// Auto mode is enabled - determine based on target date.
 			$now    = time();
 			$target = strtotime( $target_date_time );
 			return ( $target - $now ) < 0 ? 'countup' : 'countdown';
@@ -385,7 +386,7 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		 * @return string Formatted date string.
 		 */
 		private function format_target_date( string $target_date_time ): string {
-			$timestamp = strtotime( $target_date_time );
+			$timestamp   = strtotime( $target_date_time );
 			$date_format = get_option( 'date_format' );
 			$time_format = get_option( 'time_format' );
 			
@@ -409,7 +410,7 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 				}
 			}
 
-			$time_text = ! empty( $parts ) ? implode( ', ', $parts ) : __( 'Less than a second', 'gatherpress-countdown' );
+			$time_text      = ! empty( $parts ) ? implode( ', ', $parts ) : __( 'Less than a second', 'gatherpress-countdown' );
 			$formatted_date = $this->format_target_date( $target_date_time );
 
 			if ( $mode === 'countdown' ) {
@@ -446,31 +447,31 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 			array $enabled_segments,
 			bool $show_labels
 		): string {
-			// Build wrapper attributes
+			// Build wrapper attributes.
 			$wrapper_attributes = get_block_wrapper_attributes(
 				array( 'class' => 'wp-block-gatherpress-countdown' )
 			);
 
-			// Build data attributes
+			// Build data attributes.
 			$data_attrs = $this->build_data_attributes( $target_date_time, $mode, $show_segments );
 
-			// Build screen reader text
+			// Build screen reader text.
 			$sr_text = $this->build_screen_reader_text( $enabled_segments, $mode, $target_date_time );
 
-			// Build timer HTML with semantic structure and BEM classes
+			// Build timer HTML with semantic structure and BEM classes.
 			$timer_html = sprintf(
 				'<time class="gatherpress-countdown" datetime="%s" %s role="timer" aria-live="polite" aria-atomic="true">',
 				esc_attr( $target_date_time ),
 				$data_attrs
 			);
 
-			// Add screen reader only text
+			// Add screen reader only text.
 			$timer_html .= sprintf(
 				'<span class="screen-reader-text">%s</span>',
 				esc_html( $sr_text )
 			);
 
-			// Add visible segments
+			// Add visible segments.
 			$timer_html .= '<span class="gatherpress-countdown__display" aria-hidden="true">';
 			foreach ( $enabled_segments as $segment ) {
 				$timer_html .= $this->render_segment( $segment, $show_labels );
@@ -479,7 +480,7 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 
 			$timer_html .= '</time>';
 
-			// Build noscript fallback
+			// Build noscript fallback.
 			$noscript_content = $this->render_noscript_fallback( $enabled_segments, $mode, $target_date_time );
 
 			return sprintf(
@@ -500,9 +501,9 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		 */
 		private function render_noscript_fallback( array $enabled_segments, string $mode, string $target_date_time ): string {
 			$formatted_date = $this->format_target_date( $target_date_time );
-			$now = time();
-			$target = strtotime( $target_date_time );
-			$is_future = $target > $now;
+			$now            = time();
+			$target         = strtotime( $target_date_time );
+			$is_future      = $target > $now;
 
 			if ( $mode === 'countdown' && $is_future ) {
 				$message = sprintf(
@@ -542,7 +543,7 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 			);
 
 			foreach ( self::SEGMENT_ORDER as $segment ) {
-				$data_key               = 'data-show-' . $segment;
+				$data_key                = 'data-show-' . $segment;
 				$data_attrs[ $data_key ] = esc_attr( $show_segments[ $segment ] ? '1' : '0' );
 			}
 
@@ -589,5 +590,5 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 	}
 }
 
-// Render the block using the singleton instance
+// Render the block using the singleton instance.
 echo Block_Renderer::get_instance()->render( $attributes, $content, $block );

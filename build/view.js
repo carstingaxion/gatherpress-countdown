@@ -2,13 +2,16 @@
 /*!*********************!*\
   !*** ./src/view.js ***!
   \*********************/
+/* eslint-env browser */
 /**
- * Frontend countdown timer functionality.
+ * Frontend countdown timer functionality with performance optimizations.
  *
- * Handles real-time countdown/countup updates on the frontend.
- * Updates all countdown timer blocks on the page every second.
+ * Handles real-time countdown/countup updates on the frontend using:
+ * - IntersectionObserver to pause timers when off-screen
+ * - RequestAnimationFrame for optimal rendering
+ * - will-change CSS for GPU acceleration
  *
- * @package GatherPressCountdown
+ * @package
  */
 
 (function () {
@@ -35,6 +38,65 @@
    * @type {string[]}
    */
   const SEGMENT_ORDER = ['years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds'];
+
+  /**
+   * Timer state manager.
+   *
+   * @type {Object}
+   */
+  const timerState = {
+    intervalId: null,
+    visibleTimers: new Set(),
+    allTimers: new Set(),
+    observer: null
+  };
+
+  /**
+   * Get label for time segment with singular/plural support.
+   *
+   * @param {string} type  - Segment type (years, months, etc).
+   * @param {number} value - Segment value.
+   * @return {string} Translated label.
+   */
+  function getSegmentLabel(type, value) {
+    const labelMap = {
+      years: {
+        singular: 'Year',
+        plural: 'Years'
+      },
+      months: {
+        singular: 'Month',
+        plural: 'Months'
+      },
+      weeks: {
+        singular: 'Week',
+        plural: 'Weeks'
+      },
+      days: {
+        singular: 'Day',
+        plural: 'Days'
+      },
+      hours: {
+        singular: 'Hour',
+        plural: 'Hours'
+      },
+      minutes: {
+        singular: 'Minute',
+        plural: 'Minutes'
+      },
+      seconds: {
+        singular: 'Second',
+        plural: 'Seconds'
+      }
+    };
+    if (!labelMap[type]) {
+      return '';
+    }
+    if (value === 1) {
+      return labelMap[type].singular;
+    }
+    return labelMap[type].plural;
+  }
 
   /**
    * Calculate time difference with cascading based on selected segments.
@@ -116,13 +178,13 @@
     if (!targetDateTime) {
       return;
     }
-    const segmentConfig = getSegmentConfig(timerElement);
-    const timeLeft = calculateTimeDifference(targetDateTime, segmentConfig);
     const segmentElements = timerElement.querySelectorAll('.gatherpress-countdown__segment');
     if (segmentElements.length === 0) {
       return;
     }
+    const segmentConfig = getSegmentConfig(timerElement);
     const enabledSegments = getEnabledSegments(segmentConfig);
+    const timeLeft = calculateTimeDifference(targetDateTime, segmentConfig);
     const values = enabledSegments.map(function (segment) {
       return timeLeft[segment];
     });
@@ -135,26 +197,46 @@
         break;
       }
     }
-    segmentElements.forEach(function (segment, index) {
-      if (index >= values.length) {
-        return;
-      }
-      const value = values[index];
-      const numberElement = segment.querySelector('.gatherpress-countdown__number');
-      if (numberElement) {
-        numberElement.textContent = formatNumber(value);
-      }
 
-      // Only hide segments that come BEFORE the first non-zero segment
-      // This ensures in-between zero values are never hidden
-      if (firstNonZeroIndex !== -1 && index < firstNonZeroIndex && value === 0) {
-        segment.style.display = 'none';
-      } else {
-        segment.style.display = '';
-      }
+    // Use requestAnimationFrame for smooth updates
+    requestAnimationFrame(function () {
+      segmentElements.forEach(function (segment, index) {
+        if (index >= values.length) {
+          return;
+        }
+        const segmentType = enabledSegments[index];
+        const value = values[index];
+        const numberElement = segment.querySelector('.gatherpress-countdown__number');
+        const labelElement = segment.querySelector('.gatherpress-countdown__label');
+
+        // Update number
+        if (numberElement) {
+          const newValue = formatNumber(value);
+          if (numberElement.textContent !== newValue) {
+            numberElement.textContent = newValue;
+          }
+        }
+
+        // Update label with singular/plural form
+        if (labelElement) {
+          const newLabel = getSegmentLabel(segmentType, value);
+          if (labelElement.textContent !== newLabel) {
+            labelElement.textContent = newLabel;
+          }
+        }
+
+        // Handle visibility
+        const shouldHide = firstNonZeroIndex !== -1 && index < firstNonZeroIndex && value === 0;
+        const isCurrentlyHidden = segment.style.display === 'none';
+        if (shouldHide && !isCurrentlyHidden) {
+          segment.style.display = 'none';
+        } else if (!shouldHide && isCurrentlyHidden) {
+          segment.style.display = '';
+        }
+      });
     });
 
-    // Update mode attribute if needed.
+    // Update mode attribute if needed
     const newMode = timeLeft.total < 0 ? 'countup' : 'countdown';
     if (timerElement.dataset.mode !== newMode) {
       timerElement.dataset.mode = newMode;
@@ -162,9 +244,108 @@
   }
 
   /**
+   * Update all visible timers.
+   *
+   * Only updates timers that are currently in the viewport.
+   *
+   * @return {void}
+   */
+  function updateVisibleTimers() {
+    if (timerState.visibleTimers.size === 0) {
+      return;
+    }
+    timerState.visibleTimers.forEach(function (timer) {
+      updateTimer(timer);
+    });
+  }
+
+  /**
+   * Start the update interval.
+   *
+   * @return {void}
+   */
+  function startInterval() {
+    if (timerState.intervalId) {
+      return;
+    }
+    updateVisibleTimers();
+    timerState.intervalId = setInterval(updateVisibleTimers, 1000);
+  }
+
+  /**
+   * Stop the update interval.
+   *
+   * @return {void}
+   */
+  function stopInterval() {
+    if (timerState.intervalId) {
+      clearInterval(timerState.intervalId);
+      timerState.intervalId = null;
+    }
+  }
+
+  /**
+   * Handle intersection observer entries.
+   *
+   * @param {IntersectionObserverEntry[]} entries - Observer entries.
+   * @return {void}
+   */
+  function handleIntersection(entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        // Timer entered viewport
+        timerState.visibleTimers.add(entry.target);
+        // Immediately update the timer
+        updateTimer(entry.target);
+
+        // Start interval if this is the first visible timer
+        if (timerState.visibleTimers.size === 1) {
+          startInterval();
+        }
+      } else {
+        // Timer left viewport
+        timerState.visibleTimers.delete(entry.target);
+
+        // Stop interval if no timers are visible
+        if (timerState.visibleTimers.size === 0) {
+          stopInterval();
+        }
+      }
+    });
+  }
+
+  /**
+   * Initialize IntersectionObserver for performance optimization.
+   *
+   * @return {void}
+   */
+  function initIntersectionObserver() {
+    // Check if IntersectionObserver is supported
+    if (!('IntersectionObserver' in window)) {
+      // Fallback: observe all timers
+      timerState.allTimers.forEach(function (timer) {
+        timerState.visibleTimers.add(timer);
+      });
+      startInterval();
+      return;
+    }
+
+    // Create observer with a small root margin to preload timers slightly before they enter viewport
+    timerState.observer = new IntersectionObserver(handleIntersection, {
+      rootMargin: '50px',
+      threshold: 0
+    });
+
+    // Observe all timers
+    timerState.allTimers.forEach(function (timer) {
+      timerState.observer.observe(timer);
+    });
+  }
+
+  /**
    * Initialize countdown timers on the page.
    *
-   * Sets up interval to update all countdown timers every second.
+   * Sets up IntersectionObserver and interval to update countdown timers.
    *
    * @return {void}
    */
@@ -174,21 +355,48 @@
       return;
     }
 
-    // Initial update.
-    timers.forEach(updateTimer);
+    // Store all timers
+    timers.forEach(function (timer) {
+      timerState.allTimers.add(timer);
+    });
 
-    // Update every second.
-    setInterval(function () {
-      timers.forEach(updateTimer);
-    }, 1000);
+    // Initialize intersection observer for performance
+    initIntersectionObserver();
   }
 
-  // Initialize when DOM is ready.
+  /**
+   * Clean up resources on page unload.
+   *
+   * @return {void}
+   */
+  function cleanup() {
+    stopInterval();
+    if (timerState.observer) {
+      timerState.observer.disconnect();
+      timerState.observer = null;
+    }
+    timerState.visibleTimers.clear();
+    timerState.allTimers.clear();
+  }
+
+  // Initialize when DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initCountdownTimers);
   } else {
     initCountdownTimers();
   }
+
+  // Clean up on page unload
+  window.addEventListener('beforeunload', cleanup);
+
+  // Handle visibility change to pause/resume timers
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      stopInterval();
+    } else if (timerState.visibleTimers.size > 0) {
+      startInterval();
+    }
+  });
 })();
 /******/ })()
 ;

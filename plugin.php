@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @since 0.1.0
  */
-final class Plugin {
+class Plugin {
 	/**
 	 * Single instance of the class.
 	 *

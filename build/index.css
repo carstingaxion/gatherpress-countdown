@@ -107,6 +107,16 @@
   background: #f0f6fc;
   border-left-color: #2271b1;
 }
+.gatherpress-countdown__placeholder {
+  background: #f0f0f0;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+.gatherpress-countdown__placeholder p {
+  margin: 0;
+  font-size: 0.95rem;
+}
 .gatherpress-countdown-info-notice {
   margin-top: 16px !important;
   margin-bottom: 0 !important;
@@ -119,6 +129,13 @@
 .gatherpress-countdown-info-notice p:last-child {
   margin-bottom: 0;
 }
+.editor-styles-wrapper .gatherpress-countdown__display {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
 .editor-styles-wrapper .wp-block-gatherpress-countdown {
   margin: 1rem 0;
 }
@@ -127,13 +144,6 @@
   z-index: 1;
   left: 0;
   top: 0;
-}
-.editor-styles-wrapper .gatherpress-countdown__display {
-  display: flex;
-  gap: 2rem;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
 }
 .editor-styles-wrapper .wp-block-gatherpress-countdown.is-style-classic .gatherpress-countdown__display {
   gap: 1.5rem;
@@ -154,16 +164,6 @@
   background: rgba(0, 0, 0, 0.8);
   padding: 2rem 3rem;
   border-radius: 16px;
-}
-.gatherpress-countdown__placeholder {
-  background: #f0f0f0;
-  border: 2px dashed #ccc;
-  border-radius: 8px;
-  margin: 1rem 0;
-}
-.gatherpress-countdown__placeholder p {
-  margin: 0;
-  font-size: 0.95rem;
 }
 
 /*# sourceMappingURL=index.css.map*/

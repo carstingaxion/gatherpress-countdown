@@ -3,7 +3,7 @@
  *
  * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-i18n/
  */
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
 /**
  * React hook that is used to mark the block wrapper element.
@@ -11,10 +11,14 @@ import { __ } from '@wordpress/i18n';
  *
  * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-block-editor/#useblockprops
  */
-import { useBlockProps, InspectorControls, BlockControls } from '@wordpress/block-editor';
+import {
+	useBlockProps,
+	InspectorControls,
+	BlockControls,
+} from '@wordpress/block-editor';
 
-import { 
-	PanelBody, 
+import {
+	PanelBody,
 	ToggleControl,
 	ToolbarGroup,
 	ToolbarButton,
@@ -26,10 +30,10 @@ import {
 	MenuGroup,
 	MenuItem,
 	Button,
-	RadioControl
+	RadioControl,
 } from '@wordpress/components';
 
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useMemo } from '@wordpress/element';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { dateI18n, getSettings } from '@wordpress/date';
 import { store as coreStore } from '@wordpress/core-data';
@@ -98,7 +102,15 @@ const TIME_UNITS = {
  *
  * @type {string[]}
  */
-const SEGMENT_ORDER = ['years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds'];
+const SEGMENT_ORDER = [
+	'years',
+	'months',
+	'weeks',
+	'days',
+	'hours',
+	'minutes',
+	'seconds',
+];
 
 /**
  * Calculate time difference with cascading based on selected segments.
@@ -109,7 +121,10 @@ const SEGMENT_ORDER = ['years', 'months', 'weeks', 'days', 'hours', 'minutes', '
  */
 function calculateTimeDifference( targetDateTime, segments ) {
 	if ( ! targetDateTime ) {
-		return SEGMENT_ORDER.reduce( ( acc, key ) => ({ ...acc, [key]: 0 }), { total: 0 } );
+		return SEGMENT_ORDER.reduce(
+			( acc, key ) => ( { ...acc, [ key ]: 0 } ),
+			{ total: 0 }
+		);
 	}
 
 	const now = new Date().getTime();
@@ -122,13 +137,17 @@ function calculateTimeDifference( targetDateTime, segments ) {
 
 	// Calculate each segment in order, subtracting from remainingSeconds
 	SEGMENT_ORDER.forEach( ( segment ) => {
-		const showKey = `show${segment.charAt(0).toUpperCase() + segment.slice(1)}`;
-		
-		if ( segments[showKey] ) {
-			result[segment] = Math.floor( remainingSeconds / TIME_UNITS[segment] );
-			remainingSeconds -= result[segment] * TIME_UNITS[segment];
+		const showKey = `show${
+			segment.charAt( 0 ).toUpperCase() + segment.slice( 1 )
+		}`;
+
+		if ( segments[ showKey ] ) {
+			result[ segment ] = Math.floor(
+				remainingSeconds / TIME_UNITS[ segment ]
+			);
+			remainingSeconds -= result[ segment ] * TIME_UNITS[ segment ];
 		} else {
-			result[segment] = 0;
+			result[ segment ] = 0;
 		}
 	} );
 
@@ -153,16 +172,25 @@ function formatNumber( num ) {
  * @return {string} Translated label.
  */
 function getSegmentLabel( type, value ) {
-	const labels = {
-		years: value === 1 ? __( 'Year' ) : __( 'Years' ),
-		months: value === 1 ? __( 'Month' ) : __( 'Months' ),
-		weeks: value === 1 ? __( 'Week' ) : __( 'Weeks' ),
-		days: value === 1 ? __( 'Day' ) : __( 'Days' ),
-		hours: value === 1 ? __( 'Hour' ) : __( 'Hours' ),
-		minutes: value === 1 ? __( 'Minute' ) : __( 'Minutes' ),
-		seconds: value === 1 ? __( 'Second' ) : __( 'Seconds' ),
+	const labelMap = {
+		years: { singular: __( 'Year' ), plural: __( 'Years' ) },
+		months: { singular: __( 'Month' ), plural: __( 'Months' ) },
+		weeks: { singular: __( 'Week' ), plural: __( 'Weeks' ) },
+		days: { singular: __( 'Day' ), plural: __( 'Days' ) },
+		hours: { singular: __( 'Hour' ), plural: __( 'Hours' ) },
+		minutes: { singular: __( 'Minute' ), plural: __( 'Minutes' ) },
+		seconds: { singular: __( 'Second' ), plural: __( 'Seconds' ) },
 	};
-	return labels[ type ] || '';
+
+	if ( ! labelMap[ type ] ) {
+		return '';
+	}
+
+	if ( value === 1 ) {
+		return labelMap[ type ].singular;
+	}
+
+	return labelMap[ type ].plural;
 }
 
 /**
@@ -172,24 +200,35 @@ function getSegmentLabel( type, value ) {
  * @return {Object} Events data and loading state.
  */
 function useGatherPressEvents( mode ) {
-	return useSelect( ( select ) => {
-		const { getEntityRecords, isResolving } = select( coreStore );
-		const queryArgs = {
-			per_page: 100,
-			status: 'publish',
-			order: mode === 'countup' ? 'desc' : 'asc',
-			gatherpress_event_query: mode === 'countup' ? 'past' : 'upcoming',
-		};
-		
-		return {
-			events: getEntityRecords( 'postType', 'gatherpress_event', queryArgs ) || [],
-			isLoadingEvents: isResolving( 'getEntityRecords', [
-				'postType',
-				'gatherpress_event',
-				queryArgs,
-			] ),
-		};
-	}, [ mode ] );
+	return useSelect(
+		( select ) => {
+			const { getEntityRecords, isResolving } = select( coreStore );
+			const queryValue = mode === 'countup' ? 'past' : 'upcoming';
+			const orderValue = mode === 'countup' ? 'desc' : 'asc';
+
+			const queryArgs = {
+				per_page: 100,
+				status: 'publish',
+				order: orderValue,
+				gatherpress_event_query: queryValue,
+			};
+
+			return {
+				events:
+					getEntityRecords(
+						'postType',
+						'gatherpress_event',
+						queryArgs
+					) || [],
+				isLoadingEvents: isResolving( 'getEntityRecords', [
+					'postType',
+					'gatherpress_event',
+					queryArgs,
+				] ),
+			};
+		},
+		[ mode ]
+	);
 }
 
 /**
@@ -201,12 +240,12 @@ function useGatherPressTaxonomies() {
 	return useSelect( ( select ) => {
 		const { getTaxonomies, isResolving } = select( coreStore );
 		const queryArgs = { per_page: -1 };
-		
+
 		const allTaxonomies = getTaxonomies( queryArgs ) || [];
-		const eventTaxonomies = allTaxonomies.filter( 
-			tax => tax.types && tax.types.includes( 'gatherpress_event' )
+		const eventTaxonomies = allTaxonomies.filter(
+			( tax ) => tax.types && tax.types.includes( 'gatherpress_event' )
 		);
-		
+
 		return {
 			taxonomies: eventTaxonomies,
 			isLoadingTaxonomies: isResolving( 'getTaxonomies', [ queryArgs ] ),
@@ -221,17 +260,18 @@ function useGatherPressTaxonomies() {
  * @return {Object} Terms data and loading state.
  */
 function useTaxonomyTerms( taxonomy ) {
-	return useSelect( 
+	return useSelect(
 		( select ) => {
 			if ( ! taxonomy ) {
 				return { terms: [], isLoadingTerms: false };
 			}
-			
+
 			const { getEntityRecords, isResolving } = select( coreStore );
 			const queryArgs = { per_page: 100 };
-			
+
 			return {
-				terms: getEntityRecords( 'taxonomy', taxonomy, queryArgs ) || [],
+				terms:
+					getEntityRecords( 'taxonomy', taxonomy, queryArgs ) || [],
 				isLoadingTerms: isResolving( 'getEntityRecords', [
 					'taxonomy',
 					taxonomy,
@@ -257,20 +297,28 @@ function useNextEventFromTerm( taxonomy, termId, mode ) {
 			if ( ! taxonomy || ! termId ) {
 				return { nextEventFromTerm: null, isLoadingNextEvent: false };
 			}
-			
+
 			const { getEntityRecords, isResolving } = select( coreStore );
+			const queryValue = mode === 'countup' ? 'past' : 'upcoming';
+			const orderValue = mode === 'countup' ? 'desc' : 'asc';
+
 			const queryArgs = {
 				per_page: 1,
 				status: 'publish',
-				[taxonomy]: termId,
-				gatherpress_event_query: mode === 'countup' ? 'past' : 'upcoming',
-				order: mode === 'countup' ? 'desc' : 'asc',
+				[ taxonomy ]: termId,
+				gatherpress_event_query: queryValue,
+				order: orderValue,
 			};
-			
-			const events = getEntityRecords( 'postType', 'gatherpress_event', queryArgs ) || [];
-			
+
+			const events =
+				getEntityRecords(
+					'postType',
+					'gatherpress_event',
+					queryArgs
+				) || [];
+
 			return {
-				nextEventFromTerm: events.length > 0 ? events[0] : null,
+				nextEventFromTerm: events.length > 0 ? events[ 0 ] : null,
 				isLoadingNextEvent: isResolving( 'getEntityRecords', [
 					'postType',
 					'gatherpress_event',
@@ -294,7 +342,7 @@ function useGatherPressEvent( eventId ) {
 			if ( ! eventId ) {
 				return null;
 			}
-			
+
 			const { getEntityRecord } = select( coreStore );
 			return getEntityRecord( 'postType', 'gatherpress_event', eventId );
 		},
@@ -316,9 +364,13 @@ function useContextEventDate( contextPostId, contextPostType, isEventContext ) {
 			if ( ! isEventContext || ! contextPostId ) {
 				return null;
 			}
-			
+
 			const { getEntityRecord } = select( coreStore );
-			const post = getEntityRecord( 'postType', 'gatherpress_event', contextPostId );
+			const post = getEntityRecord(
+				'postType',
+				'gatherpress_event',
+				contextPostId
+			);
 			return post?.meta?.gatherpress_datetime_start || null;
 		},
 		[ isEventContext, contextPostId ]
@@ -328,7 +380,8 @@ function useContextEventDate( contextPostId, contextPostType, isEventContext ) {
 /**
  * Render a loading state component.
  *
- * @param {string} message - Loading message.
+ * @param {Object} props         - Component props.
+ * @param {string} props.message - Loading message.
  * @return {Element} Loading component.
  */
 function LoadingState( { message } ) {
@@ -343,8 +396,9 @@ function LoadingState( { message } ) {
 /**
  * Render an empty state component.
  *
- * @param {string}  message - Empty state message.
- * @param {Element} action  - Optional action button.
+ * @param {Object}  props         - Component props.
+ * @param {string}  props.message - Empty state message.
+ * @param {Element} props.action  - Optional action button.
  * @return {Element} Empty state component.
  */
 function EmptyState( { message, action } ) {
@@ -359,28 +413,26 @@ function EmptyState( { message, action } ) {
 /**
  * Render a sync notice component.
  *
- * @param {string} message - Notice message.
+ * @param {Object} props         - Component props.
+ * @param {string} props.message - Notice message.
  * @return {Element} Notice component.
  */
 function SyncNotice( { message } ) {
-	return (
-		<p className="gatherpress-countdown-event-sync-note">
-			{ message }
-		</p>
-	);
+	return <p className="gatherpress-countdown-event-sync-note">{ message }</p>;
 }
 
 /**
  * Render an event indicator badge.
  *
- * @param {string} emoji   - Badge emoji.
- * @param {string} message - Badge message.
- * @param {string} variant - Badge variant class.
+ * @param {Object} props         - Component props.
+ * @param {string} props.emoji   - Badge emoji.
+ * @param {string} props.message - Badge message.
+ * @param {string} props.variant - Badge variant class.
  * @return {Element} Badge component.
  */
 function EventIndicator( { emoji, message, variant = '' } ) {
 	return (
-		<div className={`gatherpress-countdown-event-indicator ${variant}`}>
+		<div className={ `gatherpress-countdown-event-indicator ${ variant }` }>
 			<span className="gatherpress-countdown-event-badge">{ emoji }</span>
 			<span>{ message }</span>
 		</div>
@@ -400,9 +452,14 @@ function EventIndicator( { emoji, message, variant = '' } ) {
  * @param {Object}   props.context       - Block context.
  * @return {Element} Element to render.
  */
-export default function Edit( { attributes, setAttributes, clientId, context } ) {
-	const { 
-		targetDateTime, 
+export default function Edit( {
+	attributes,
+	setAttributes,
+	clientId,
+	context,
+} ) {
+	const {
+		targetDateTime,
 		gatherPressEventId,
 		gatherPressTaxonomy,
 		gatherPressTermId,
@@ -417,28 +474,41 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 		showDays,
 		showHours,
 		showMinutes,
-		showSeconds
+		showSeconds,
 	} = attributes;
-	
-	const segmentConfig = {
-		showYears,
-		showMonths,
-		showWeeks,
-		showDays,
-		showHours,
-		showMinutes,
-		showSeconds
-	};
-	
-	const [ timeLeft, setTimeLeft ] = useState( calculateTimeDifference( targetDateTime, segmentConfig ) );
-	const [ openDropdown, setOpenDropdown ] = useState( null );
+
+	const segmentConfig = useMemo(
+		() => ( {
+			showYears,
+			showMonths,
+			showWeeks,
+			showDays,
+			showHours,
+			showMinutes,
+			showSeconds,
+		} ),
+		[
+			showYears,
+			showMonths,
+			showWeeks,
+			showDays,
+			showHours,
+			showMinutes,
+			showSeconds,
+		]
+	);
+
+	const [ timeLeft, setTimeLeft ] = useState(
+		calculateTimeDifference( targetDateTime, segmentConfig )
+	);
+	const [ , setOpenDropdown ] = useState( null );
 	const { updateBlockAttributes } = useDispatch( 'core/block-editor' );
 
 	// Get WordPress date and time format settings
 	const dateSettings = getSettings();
 	const dateFormat = dateSettings.formats.date;
 	const timeFormat = dateSettings.formats.time;
-	const dateTimeFormat = `${dateFormat} ${timeFormat}`;
+	const dateTimeFormat = `${ dateFormat } ${ timeFormat }`;
 
 	// Get context post ID and type
 	const contextPostId = context?.postId;
@@ -446,27 +516,55 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 	const isEventContext = contextPostType === 'gatherpress_event';
 
 	// Fetch all data using custom hooks
-	const contextEventDate = useContextEventDate( contextPostId, contextPostType, isEventContext );
+	const contextEventDate = useContextEventDate(
+		contextPostId,
+		contextPostType,
+		isEventContext
+	);
 	const { events, isLoadingEvents } = useGatherPressEvents( eventMode );
 	const { taxonomies, isLoadingTaxonomies } = useGatherPressTaxonomies();
 	const { terms, isLoadingTerms } = useTaxonomyTerms( gatherPressTaxonomy );
-	const { nextEventFromTerm, isLoadingNextEvent } = useNextEventFromTerm( gatherPressTaxonomy, gatherPressTermId, taxonomyMode );
+	const { nextEventFromTerm, isLoadingNextEvent } = useNextEventFromTerm(
+		gatherPressTaxonomy,
+		gatherPressTermId,
+		taxonomyMode
+	);
 	const selectedEvent = useGatherPressEvent( gatherPressEventId );
 
 	// Determine which source is active
-	const isManualDate = targetDateTime && ! gatherPressEventId && ! gatherPressTermId && ! isEventContext;
+	const isManualDate =
+		targetDateTime &&
+		! gatherPressEventId &&
+		! gatherPressTermId &&
+		! isEventContext;
 	const isSyncedEvent = gatherPressEventId > 0;
 	const isSyncedTerm = gatherPressTermId > 0;
-	const isContextDate = isEventContext && contextEventDate && ! gatherPressEventId && ! gatherPressTermId && targetDateTime === contextEventDate;
+	const isContextDate =
+		isEventContext &&
+		contextEventDate &&
+		! gatherPressEventId &&
+		! gatherPressTermId &&
+		targetDateTime === contextEventDate;
 
 	// Auto-sync with context event date when in event context
 	useEffect( () => {
 		if ( isEventContext && contextEventDate ) {
-			if ( ! targetDateTime && ! gatherPressEventId && ! gatherPressTermId ) {
+			if (
+				! targetDateTime &&
+				! gatherPressEventId &&
+				! gatherPressTermId
+			) {
 				setAttributes( { targetDateTime: contextEventDate } );
 			}
 		}
-	}, [ isEventContext, contextEventDate, targetDateTime, gatherPressEventId, gatherPressTermId ] );
+	}, [
+		setAttributes,
+		isEventContext,
+		contextEventDate,
+		targetDateTime,
+		gatherPressEventId,
+		gatherPressTermId,
+	] );
 
 	// Update target date when synced sources change
 	useEffect( () => {
@@ -474,14 +572,14 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 		if ( eventDate && eventDate !== targetDateTime ) {
 			setAttributes( { targetDateTime: eventDate } );
 		}
-	}, [ nextEventFromTerm ] );
+	}, [ setAttributes, nextEventFromTerm, targetDateTime ] );
 
 	useEffect( () => {
 		const eventDate = selectedEvent?.meta?.gatherpress_datetime_start;
 		if ( eventDate && eventDate !== targetDateTime ) {
 			setAttributes( { targetDateTime: eventDate } );
 		}
-	}, [ selectedEvent ] );
+	}, [ setAttributes, targetDateTime, selectedEvent ] );
 
 	// Update countdown every second
 	useEffect( () => {
@@ -490,65 +588,96 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 		}
 
 		const interval = setInterval( () => {
-			setTimeLeft( calculateTimeDifference( targetDateTime, segmentConfig ) );
+			setTimeLeft(
+				calculateTimeDifference( targetDateTime, segmentConfig )
+			);
 		}, 1000 );
 
 		return () => clearInterval( interval );
-	}, [ targetDateTime, showYears, showMonths, showWeeks, showDays, showHours, showMinutes, showSeconds ] );
+	}, [ targetDateTime, segmentConfig ] );
 
 	// Auto-detect mode based on target date (only if autoMode is enabled and using manual date)
 	useEffect( () => {
 		if ( targetDateTime && autoMode && isManualDate ) {
-			const newMode = timeLeft.total < 0 ? 'countup' : 'countdown';
+			let newMode = 'countdown';
+			if ( timeLeft.total < 0 ) {
+				newMode = 'countup';
+			}
+
 			if ( newMode !== mode ) {
 				setAttributes( { mode: newMode } );
 			}
 		}
-	}, [ targetDateTime, timeLeft.total, mode, autoMode, isManualDate, setAttributes ] );
+	}, [
+		targetDateTime,
+		timeLeft.total,
+		mode,
+		autoMode,
+		isManualDate,
+		setAttributes,
+	] );
 
 	// Update block name with target date and current mode
 	useEffect( () => {
 		if ( targetDateTime && updateBlockAttributes ) {
 			const formattedDate = dateI18n( dateTimeFormat, targetDateTime );
-			const blockName = mode === 'countdown' 
-				? __( 'Countdown to', 'gatherpress-countdown' ) + ' ' + formattedDate
-				: __( 'Count up from', 'gatherpress-countdown' ) + ' ' + formattedDate;
-			
+			let blockName = '';
+
+			if ( mode === 'countdown' ) {
+				blockName = sprintf(
+					/* translators: %s: target date */
+					__( 'Countdown to %s', 'gatherpress-countdown' ),
+					formattedDate
+				);
+			} else {
+				blockName = sprintf(
+					/* translators: %s: start date */
+					__( 'Count up from %s', 'gatherpress-countdown' ),
+					formattedDate
+				);
+			}
+
 			updateBlockAttributes( clientId, {
 				metadata: {
-					name: blockName
-				}
+					name: blockName,
+				},
 			} );
 		}
-	}, [ targetDateTime, mode, clientId, updateBlockAttributes, dateTimeFormat ] );
+	}, [
+		targetDateTime,
+		mode,
+		clientId,
+		updateBlockAttributes,
+		dateTimeFormat,
+	] );
 
 	const blockProps = useBlockProps( {
 		className: 'gatherpress-countdown-wrapper',
 	} );
 
 	// Build segments array
-	const segments = SEGMENT_ORDER
-		.filter( type => {
-			const showKey = `show${type.charAt(0).toUpperCase() + type.slice(1)}`;
-			return segmentConfig[showKey];
-		} )
-		.map( type => ({
-			type,
-			value: timeLeft[type],
-			label: getSegmentLabel( type, timeLeft[type] )
-		}) );
+	const segments = SEGMENT_ORDER.filter( ( type ) => {
+		const showKey = `show${
+			type.charAt( 0 ).toUpperCase() + type.slice( 1 )
+		}`;
+		return segmentConfig[ showKey ];
+	} ).map( ( type ) => ( {
+		type,
+		value: timeLeft[ type ],
+		label: getSegmentLabel( type, timeLeft[ type ] ),
+	} ) );
 
 	// Prepare event options for ComboboxControl
-	const eventOptions = events.map( event => ({
+	const eventOptions = events.map( ( event ) => ( {
 		value: event.id,
-		label: event.title.rendered
-	}) );
+		label: event.title.rendered,
+	} ) );
 
 	// Prepare term options for ComboboxControl
-	const termOptions = terms.map( term => ({
+	const termOptions = terms.map( ( term ) => ( {
 		value: term.id,
-		label: term.name
-	}) );
+		label: term.name,
+	} ) );
 
 	/**
 	 * Handle event selection change.
@@ -557,19 +686,19 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 	 */
 	const handleEventChange = ( value ) => {
 		if ( ! value ) {
-			setAttributes( { 
+			setAttributes( {
 				gatherPressEventId: 0,
 				gatherPressTaxonomy: '',
-				gatherPressTermId: 0
+				gatherPressTermId: 0,
 			} );
 			return;
 		}
 
 		const eventId = parseInt( value, 10 );
-		setAttributes( { 
+		setAttributes( {
 			gatherPressEventId: eventId,
 			gatherPressTaxonomy: '',
-			gatherPressTermId: 0
+			gatherPressTermId: 0,
 		} );
 	};
 
@@ -580,18 +709,42 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 	 */
 	const handleTermChange = ( value ) => {
 		if ( ! value ) {
-			setAttributes( { 
+			setAttributes( {
 				gatherPressTermId: 0,
-				gatherPressEventId: 0
+				gatherPressEventId: 0,
 			} );
 			return;
 		}
 
 		const termId = parseInt( value, 10 );
-		setAttributes( { 
+		setAttributes( {
 			gatherPressTermId: termId,
-			gatherPressEventId: 0
+			gatherPressEventId: 0,
 		} );
+	};
+
+	/**
+	 * Handle manual date/time change from DateTimePicker.
+	 *
+	 * @param {string} newDateTime - New date time value.
+	 */
+	const handleDateTimeChange = ( newDateTime ) => {
+		// Ensure the date is stored with full precision
+		if ( newDateTime ) {
+			// Parse the date to ensure it's valid
+			const date = new Date( newDateTime );
+			if ( ! isNaN( date.getTime() ) ) {
+				// Store as ISO string with full precision
+				const isoString = date.toISOString();
+				setAttributes( {
+					targetDateTime: isoString,
+					gatherPressEventId: 0,
+					gatherPressTaxonomy: '',
+					gatherPressTermId: 0,
+				} );
+				setOpenDropdown( null );
+			}
+		}
 	};
 
 	/**
@@ -601,23 +754,57 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 	 */
 	const renderEventSelector = () => {
 		if ( isLoadingEvents ) {
-			return <LoadingState message={ __( 'Loading events...', 'gatherpress-countdown' ) } />;
+			return (
+				<LoadingState
+					message={ __( 'Loading events…', 'gatherpress-countdown' ) }
+				/>
+			);
 		}
-		
+
 		if ( events.length === 0 ) {
-			return <EmptyState message={ __( 'No GatherPress events found.', 'gatherpress-countdown' ) } />;
+			return (
+				<EmptyState
+					message={ __(
+						'No GatherPress events found.',
+						'gatherpress-countdown'
+					) }
+				/>
+			);
 		}
-		
+
+		let syncedMessage = '';
+		if ( gatherPressEventId > 0 && selectedEvent ) {
+			syncedMessage = sprintf(
+				/* translators: %s: event title */
+				__( 'Synced with event: %s', 'gatherpress-countdown' ),
+				selectedEvent.title.rendered
+			);
+		}
+
 		return (
 			<>
 				<RadioControl
 					label={ __( 'Display mode', 'gatherpress-countdown' ) }
 					selected={ eventMode }
 					options={ [
-						{ label: __( 'Countdown (time until event)', 'gatherpress-countdown' ), value: 'countdown' },
-						{ label: __( 'Count up (time since event)', 'gatherpress-countdown' ), value: 'countup' },
+						{
+							label: __(
+								'Countdown (time until event)',
+								'gatherpress-countdown'
+							),
+							value: 'countdown',
+						},
+						{
+							label: __(
+								'Count up (time since event)',
+								'gatherpress-countdown'
+							),
+							value: 'countup',
+						},
 					] }
-					onChange={ ( value ) => setAttributes( { eventMode: value, mode: value } ) }
+					onChange={ ( value ) =>
+						setAttributes( { eventMode: value, mode: value } )
+					}
 				/>
 				<ComboboxControl
 					label={ __( 'Select an event', 'gatherpress-countdown' ) }
@@ -625,17 +812,22 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 					onChange={ handleEventChange }
 					options={ eventOptions }
 					allowReset
-					help={ gatherPressEventId > 0 && selectedEvent ? 
-						__( 'Synced with event: ', 'gatherpress-countdown' ) + selectedEvent.title.rendered : 
-						''
-					}
+					help={ syncedMessage }
 				/>
 				{ gatherPressEventId > 0 && eventMode === 'countdown' && (
 					<ToggleControl
-						label={ __( 'Automatic mode switching', 'gatherpress-countdown' ) }
+						label={ __(
+							'Automatic mode switching',
+							'gatherpress-countdown'
+						) }
 						checked={ autoMode }
-						onChange={ ( value ) => setAttributes( { autoMode: value } ) }
-						help={ __( 'Automatically switch from countdown to count-up when the event date is reached.', 'gatherpress-countdown' ) }
+						onChange={ ( value ) =>
+							setAttributes( { autoMode: value } )
+						}
+						help={ __(
+							'Automatically switch from countdown to count-up when the event date is reached.',
+							'gatherpress-countdown'
+						) }
 					/>
 				) }
 			</>
@@ -649,26 +841,47 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 	 */
 	const renderTaxonomySelector = () => {
 		if ( isLoadingTaxonomies ) {
-			return <LoadingState message={ __( 'Loading taxonomies...', 'gatherpress-countdown' ) } />;
+			return (
+				<LoadingState
+					message={ __(
+						'Loading taxonomies…',
+						'gatherpress-countdown'
+					) }
+				/>
+			);
 		}
-		
+
 		if ( taxonomies.length === 0 ) {
-			return <EmptyState message={ __( 'No taxonomies found for GatherPress events.', 'gatherpress-countdown' ) } />;
+			return (
+				<EmptyState
+					message={ __(
+						'No taxonomies found for GatherPress events.',
+						'gatherpress-countdown'
+					) }
+				/>
+			);
 		}
-		
+
 		if ( ! gatherPressTaxonomy ) {
 			return (
 				<>
-					<p className="gatherpress-countdown-taxonomy-label">{ __( 'Select a taxonomy:', 'gatherpress-countdown' ) }</p>
+					<p className="gatherpress-countdown-taxonomy-label">
+						{ __(
+							'Select an event taxonomy:',
+							'gatherpress-countdown'
+						) }
+					</p>
 					<MenuGroup>
 						{ taxonomies.map( ( tax ) => (
 							<MenuItem
 								key={ tax.slug }
-								onClick={ () => setAttributes( {
-									gatherPressTaxonomy: tax.slug,
-									gatherPressTermId: 0,
-									gatherPressEventId: 0
-								} ) }
+								onClick={ () =>
+									setAttributes( {
+										gatherPressTaxonomy: tax.slug,
+										gatherPressTermId: 0,
+										gatherPressEventId: 0,
+									} )
+								}
 							>
 								{ tax.name }
 							</MenuItem>
@@ -677,7 +890,7 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 				</>
 			);
 		}
-		
+
 		return renderTermSelector();
 	};
 
@@ -688,26 +901,62 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 	 */
 	const renderTermSelector = () => {
 		if ( isLoadingTerms ) {
-			return <LoadingState message={ __( 'Loading terms...', 'gatherpress-countdown' ) } />;
+			return (
+				<LoadingState
+					message={ __( 'Loading terms…', 'gatherpress-countdown' ) }
+				/>
+			);
 		}
-		
+
 		if ( terms.length === 0 ) {
 			return (
-				<EmptyState 
+				<EmptyState
 					message={ __( 'No terms found.', 'gatherpress-countdown' ) }
 					action={
 						<Button
 							isSecondary
 							isSmall
-							onClick={ () => setAttributes( { gatherPressTaxonomy: '' } ) }
+							onClick={ () =>
+								setAttributes( { gatherPressTaxonomy: '' } )
+							}
 						>
-							{ __( 'Back to taxonomies', 'gatherpress-countdown' ) }
+							{ __(
+								'Back to taxonomies',
+								'gatherpress-countdown'
+							) }
 						</Button>
 					}
 				/>
 			);
 		}
-		
+
+		let eventModeMessage = '';
+		if ( taxonomyMode === 'countdown' ) {
+			eventModeMessage = __(
+				'Using next event:',
+				'gatherpress-countdown'
+			);
+		} else {
+			eventModeMessage = __(
+				'Using last event:',
+				'gatherpress-countdown'
+			);
+		}
+
+		let syncMessage = '';
+		if ( gatherPressTermId > 0 && nextEventFromTerm ) {
+			syncMessage = sprintf(
+				/* translators: 1: mode message, 2: event title */
+				__( '%1$s %2$s', 'gatherpress-countdown' ),
+				eventModeMessage,
+				nextEventFromTerm.title.rendered
+			);
+		}
+
+		const currentTaxonomy = taxonomies.find(
+			( t ) => t.slug === gatherPressTaxonomy
+		);
+
 		return (
 			<>
 				<div className="gatherpress-countdown-taxonomy-header">
@@ -715,25 +964,39 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 						isSmall
 						icon="arrow-left-alt2"
 						onClick={ () => {
-							setAttributes( { 
+							setAttributes( {
 								gatherPressTaxonomy: '',
-								gatherPressTermId: 0
+								gatherPressTermId: 0,
 							} );
 						} }
 						label={ __( 'Back', 'gatherpress-countdown' ) }
 					/>
 					<span className="gatherpress-countdown-taxonomy-name">
-						{ taxonomies.find( t => t.slug === gatherPressTaxonomy )?.name }
+						{ currentTaxonomy ? currentTaxonomy.name : '' }
 					</span>
 				</div>
 				<RadioControl
 					label={ __( 'Display mode', 'gatherpress-countdown' ) }
 					selected={ taxonomyMode }
 					options={ [
-						{ label: __( 'Countdown (time until event)', 'gatherpress-countdown' ), value: 'countdown' },
-						{ label: __( 'Count up (time since event)', 'gatherpress-countdown' ), value: 'countup' },
+						{
+							label: __(
+								'Countdown (time until event)',
+								'gatherpress-countdown'
+							),
+							value: 'countdown',
+						},
+						{
+							label: __(
+								'Count up (time since event)',
+								'gatherpress-countdown'
+							),
+							value: 'countup',
+						},
 					] }
-					onChange={ ( value ) => setAttributes( { taxonomyMode: value, mode: value } ) }
+					onChange={ ( value ) =>
+						setAttributes( { taxonomyMode: value, mode: value } )
+					}
 				/>
 				<ComboboxControl
 					label={ __( 'Select a term', 'gatherpress-countdown' ) }
@@ -745,35 +1008,49 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 				{ gatherPressTermId > 0 && (
 					<>
 						{ isLoadingNextEvent ? (
-							<LoadingState message={ __( 'Finding next event...', 'gatherpress-countdown' ) } />
-						) : nextEventFromTerm ? (
+							<LoadingState
+								message={ __(
+									'Finding next event…',
+									'gatherpress-countdown'
+								) }
+							/>
+						) : null }
+						{ ! isLoadingNextEvent && nextEventFromTerm ? (
 							<>
-								<SyncNotice 
-									message={ 
-										taxonomyMode === 'countdown' 
-											? __( 'Using next event: ', 'gatherpress-countdown' ) + nextEventFromTerm.title.rendered
-											: __( 'Using last event: ', 'gatherpress-countdown' ) + nextEventFromTerm.title.rendered
-									} 
-								/>
+								<SyncNotice message={ syncMessage } />
 								{ taxonomyMode === 'countdown' && (
 									<ToggleControl
-										label={ __( 'Automatic mode switching', 'gatherpress-countdown' ) }
+										label={ __(
+											'Automatic mode switching',
+											'gatherpress-countdown'
+										) }
 										checked={ autoMode }
-										onChange={ ( value ) => setAttributes( { autoMode: value } ) }
-										help={ __( 'Automatically switch from countdown to count-up when the event date is reached.', 'gatherpress-countdown' ) }
+										onChange={ ( value ) =>
+											setAttributes( { autoMode: value } )
+										}
+										help={ __(
+											'Automatically switch from countdown to count-up when the event date is reached.',
+											'gatherpress-countdown'
+										) }
 									/>
 								) }
 							</>
-						) : (
+						) : null }
+						{ ! isLoadingNextEvent && ! nextEventFromTerm ? (
 							<Notice status="warning" isDismissible={ false }>
 								<p>
-									{ taxonomyMode === 'countdown' 
-										? __( 'No upcoming events found in this term.', 'gatherpress-countdown' )
-										: __( 'No past events found in this term.', 'gatherpress-countdown' )
-									}
+									{ taxonomyMode === 'countdown'
+										? __(
+												'No upcoming events found in this term.',
+												'gatherpress-countdown'
+										  )
+										: __(
+												'No past events found in this term.',
+												'gatherpress-countdown'
+										  ) }
 								</p>
 							</Notice>
-						) }
+						) : null }
 					</>
 				) }
 			</>
@@ -790,9 +1067,14 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 						renderToggle={ ( { isOpen, onToggle } ) => (
 							<ToolbarButton
 								icon="calendar-alt"
-								label={ __( 'Select date and time', 'gatherpress-countdown' ) }
+								label={ __(
+									'Select date and time',
+									'gatherpress-countdown'
+								) }
 								onClick={ () => {
-									setOpenDropdown( isOpen ? null : 'datetime' );
+									setOpenDropdown(
+										isOpen ? null : 'datetime'
+									);
 									onToggle();
 								} }
 								aria-expanded={ isOpen }
@@ -803,24 +1085,31 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 							<>
 								<DateTimePicker
 									currentDate={ targetDateTime || null }
-									onChange={ ( newDateTime ) => {
-										setAttributes( { 
-											targetDateTime: newDateTime,
-											gatherPressEventId: 0,
-											gatherPressTaxonomy: '',
-											gatherPressTermId: 0
-										} );
-										setOpenDropdown( null );
-									} }
+									onChange={ handleDateTimeChange }
 									is12Hour={ false }
 								/>
 								{ targetDateTime && isManualDate && (
-									<div style={{ padding: '16px', borderTop: '1px solid #ddd' }}>
+									<div
+										style={ {
+											padding: '16px',
+											borderTop: '1px solid #ddd',
+										} }
+									>
 										<ToggleControl
-											label={ __( 'Automatic mode switching', 'gatherpress-countdown' ) }
+											label={ __(
+												'Automatic mode switching',
+												'gatherpress-countdown'
+											) }
 											checked={ autoMode }
-											onChange={ ( value ) => setAttributes( { autoMode: value } ) }
-											help={ __( 'Automatically switch from countdown to count-up when the target date is reached.', 'gatherpress-countdown' ) }
+											onChange={ ( value ) =>
+												setAttributes( {
+													autoMode: value,
+												} )
+											}
+											help={ __(
+												'Automatically switch from countdown to count-up when the target date is reached.',
+												'gatherpress-countdown'
+											) }
 										/>
 									</div>
 								) }
@@ -832,8 +1121,11 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 						position="bottom center"
 						renderToggle={ ( { isOpen, onToggle } ) => (
 							<ToolbarButton
-								icon="awards"
-								label={ __( 'Select GatherPress event', 'gatherpress-countdown' ) }
+								icon="nametag"
+								label={ __(
+									'Select GatherPress event',
+									'gatherpress-countdown'
+								) }
 								onClick={ () => {
 									setOpenDropdown( isOpen ? null : 'event' );
 									onToggle();
@@ -854,9 +1146,14 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 						renderToggle={ ( { isOpen, onToggle } ) => (
 							<ToolbarButton
 								icon="tag"
-								label={ __( 'Select from taxonomy', 'gatherpress-countdown' ) }
+								label={ __(
+									'Select from GatherPress taxonomy',
+									'gatherpress-countdown'
+								) }
 								onClick={ () => {
-									setOpenDropdown( isOpen ? null : 'taxonomy' );
+									setOpenDropdown(
+										isOpen ? null : 'taxonomy'
+									);
 									onToggle();
 								} }
 								aria-expanded={ isOpen }
@@ -873,34 +1170,63 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 			</BlockControls>
 
 			<InspectorControls>
-				<PanelBody title={ __( 'Display Settings', 'gatherpress-countdown' ) }>
+				<PanelBody
+					title={ __( 'Display Settings', 'gatherpress-countdown' ) }
+				>
 					<ToggleControl
 						label={ __( 'Show labels', 'gatherpress-countdown' ) }
 						checked={ showLabels }
-						onChange={ ( value ) => setAttributes( { showLabels: value } ) }
-						help={ __( 'Display labels for time segments.', 'gatherpress-countdown' ) }
+						onChange={ ( value ) =>
+							setAttributes( { showLabels: value } )
+						}
+						help={ __(
+							'Display labels for time segments.',
+							'gatherpress-countdown'
+						) }
 					/>
 				</PanelBody>
-				<PanelBody title={ __( 'Time Segments', 'gatherpress-countdown' ) } initialOpen={ false }>
-					{ SEGMENT_ORDER.map( segment => {
-						const attrKey = `show${segment.charAt(0).toUpperCase() + segment.slice(1)}`;
-						const label = segment.charAt(0).toUpperCase() + segment.slice(1);
-						
+				<PanelBody
+					title={ __( 'Time Segments', 'gatherpress-countdown' ) }
+					initialOpen={ false }
+				>
+					{ SEGMENT_ORDER.map( ( segment ) => {
+						const attrKey = `show${
+							segment.charAt( 0 ).toUpperCase() +
+							segment.slice( 1 )
+						}`;
+						const capitalizedSegment =
+							segment.charAt( 0 ).toUpperCase() +
+							segment.slice( 1 );
+
 						return (
 							<ToggleControl
 								key={ segment }
-								label={ __( `Show ${segment}`, 'gatherpress-countdown' ) }
-								checked={ attributes[attrKey] }
-								onChange={ ( value ) => setAttributes( { [attrKey]: value } ) }
+								label={ sprintf(
+									/* translators: %s: time segment name */
+									__( 'Show %s', 'gatherpress-countdown' ),
+									capitalizedSegment
+								) }
+								checked={ attributes[ attrKey ] }
+								onChange={ ( value ) =>
+									setAttributes( { [ attrKey ]: value } )
+								}
 							/>
 						);
 					} ) }
-					<Notice status="info" isDismissible={ false } className="gatherpress-countdown-info-notice">
+					<Notice
+						status="info"
+						isDismissible={ false }
+						className="gatherpress-countdown-info-notice"
+					>
 						<p>
-							{ __( 'Time segments cascade from largest to smallest. For example, a 40-day countdown with "months" and "days" selected displays "1 month, 10 days". Deselecting "months" updates it to "40 days".' ) }
+							{ __(
+								'Time segments cascade from largest to smallest. For example, a 40-day countdown with "months" and "days" selected displays "1 month, 10 days". Deselecting "months" updates it to "40 days".'
+							) }
 						</p>
 						<p>
-							{ __( 'On the frontend, segments automatically hide when they reach zero and all larger segments are already hidden.' ) }
+							{ __(
+								'On the frontend, segments automatically hide when they reach zero and all larger segments are already hidden.'
+							) }
 						</p>
 					</Notice>
 				</PanelBody>
@@ -908,50 +1234,88 @@ export default function Edit( { attributes, setAttributes, clientId, context } )
 
 			<div { ...blockProps }>
 				{ isContextDate && (
-					<EventIndicator 
-						emoji="📅" 
-						message={ __( 'Using event date from context', 'gatherpress-countdown' ) }
+					<EventIndicator
+						emoji="📅"
+						message={ __(
+							'Using event date from context',
+							'gatherpress-countdown'
+						) }
 						variant="gatherpress-countdown-context-indicator"
 					/>
 				) }
 				{ isSyncedEvent && selectedEvent && (
-					<EventIndicator 
-						emoji="🎟️" 
-						message={ __( 'Synced with event: ', 'gatherpress-countdown' ) + selectedEvent.title.rendered }
+					<EventIndicator
+						emoji="🎟️"
+						message={ sprintf(
+							/* translators: %s: event title */
+							__(
+								'Synced with event: %s',
+								'gatherpress-countdown'
+							),
+							selectedEvent.title.rendered
+						) }
 					/>
 				) }
 				{ isSyncedTerm && nextEventFromTerm && (
-					<EventIndicator 
-						emoji="🏷️" 
-						message={ 
+					<EventIndicator
+						emoji="🏷️"
+						message={ sprintf(
+							/* translators: 1: mode message, 2: event title */
+							__( '%1$s %2$s', 'gatherpress-countdown' ),
 							taxonomyMode === 'countdown'
-								? __( 'Using next event: ', 'gatherpress-countdown' ) + nextEventFromTerm.title.rendered
-								: __( 'Using last event: ', 'gatherpress-countdown' ) + nextEventFromTerm.title.rendered
-						}
+								? __(
+										'Using next event:',
+										'gatherpress-countdown'
+								  )
+								: __(
+										'Using last event:',
+										'gatherpress-countdown'
+								  ),
+							nextEventFromTerm.title.rendered
+						) }
 					/>
 				) }
 				{ ! targetDateTime ? (
 					<div className="gatherpress-countdown__placeholder">
-						<p>{ __( 'Select a date and time using the toolbar buttons above.', 'gatherpress-countdown' ) }</p>
+						<p>
+							{ __(
+								'Select a date and time using the toolbar buttons above.',
+								'gatherpress-countdown'
+							) }
+						</p>
 					</div>
-				) : segments.length === 0 ? (
+				) : null }
+				{ targetDateTime && segments.length === 0 ? (
 					<div className="gatherpress-countdown__placeholder">
-						<p>{ __( 'Please select at least one time segment to display.', 'gatherpress-countdown' ) }</p>
+						<p>
+							{ __(
+								'Please select at least one time segment to display.',
+								'gatherpress-countdown'
+							) }
+						</p>
 					</div>
-				) : (
+				) : null }
+				{ targetDateTime && segments.length > 0 ? (
 					<div className="gatherpress-countdown" data-mode={ mode }>
 						<div className="gatherpress-countdown__display">
 							{ segments.map( ( segment, index ) => (
-								<div key={ index } className="gatherpress-countdown__segment">
-									<span className="gatherpress-countdown__number">{ formatNumber( segment.value ) }</span>
+								<div
+									key={ index }
+									className="gatherpress-countdown__segment"
+								>
+									<span className="gatherpress-countdown__number">
+										{ formatNumber( segment.value ) }
+									</span>
 									{ showLabels && (
-										<span className="gatherpress-countdown__label">{ segment.label }</span>
+										<span className="gatherpress-countdown__label">
+											{ segment.label }
+										</span>
 									) }
 								</div>
 							) ) }
 						</div>
 					</div>
-				) }
+				) : null }
 			</div>
 		</>
 	);

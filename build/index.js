@@ -182,16 +182,43 @@ function formatNumber(num) {
  * @return {string} Translated label.
  */
 function getSegmentLabel(type, value) {
-  const labels = {
-    years: value === 1 ? (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Year') : (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Years'),
-    months: value === 1 ? (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Month') : (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Months'),
-    weeks: value === 1 ? (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Week') : (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Weeks'),
-    days: value === 1 ? (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Day') : (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Days'),
-    hours: value === 1 ? (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Hour') : (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Hours'),
-    minutes: value === 1 ? (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Minute') : (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Minutes'),
-    seconds: value === 1 ? (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Second') : (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Seconds')
+  const labelMap = {
+    years: {
+      singular: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Year'),
+      plural: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Years')
+    },
+    months: {
+      singular: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Month'),
+      plural: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Months')
+    },
+    weeks: {
+      singular: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Week'),
+      plural: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Weeks')
+    },
+    days: {
+      singular: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Day'),
+      plural: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Days')
+    },
+    hours: {
+      singular: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Hour'),
+      plural: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Hours')
+    },
+    minutes: {
+      singular: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Minute'),
+      plural: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Minutes')
+    },
+    seconds: {
+      singular: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Second'),
+      plural: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Seconds')
+    }
   };
-  return labels[type] || '';
+  if (!labelMap[type]) {
+    return '';
+  }
+  if (value === 1) {
+    return labelMap[type].singular;
+  }
+  return labelMap[type].plural;
 }
 
 /**
@@ -206,11 +233,13 @@ function useGatherPressEvents(mode) {
       getEntityRecords,
       isResolving
     } = select(_wordpress_core_data__WEBPACK_IMPORTED_MODULE_6__.store);
+    const queryValue = mode === 'countup' ? 'past' : 'upcoming';
+    const orderValue = mode === 'countup' ? 'desc' : 'asc';
     const queryArgs = {
       per_page: 100,
       status: 'publish',
-      order: mode === 'countup' ? 'desc' : 'asc',
-      gatherpress_event_query: mode === 'countup' ? 'past' : 'upcoming'
+      order: orderValue,
+      gatherpress_event_query: queryValue
     };
     return {
       events: getEntityRecords('postType', 'gatherpress_event', queryArgs) || [],
@@ -290,12 +319,14 @@ function useNextEventFromTerm(taxonomy, termId, mode) {
       getEntityRecords,
       isResolving
     } = select(_wordpress_core_data__WEBPACK_IMPORTED_MODULE_6__.store);
+    const queryValue = mode === 'countup' ? 'past' : 'upcoming';
+    const orderValue = mode === 'countup' ? 'desc' : 'asc';
     const queryArgs = {
       per_page: 1,
       status: 'publish',
       [taxonomy]: termId,
-      gatherpress_event_query: mode === 'countup' ? 'past' : 'upcoming',
-      order: mode === 'countup' ? 'desc' : 'asc'
+      gatherpress_event_query: queryValue,
+      order: orderValue
     };
     const events = getEntityRecords('postType', 'gatherpress_event', queryArgs) || [];
     return {
@@ -347,7 +378,8 @@ function useContextEventDate(contextPostId, contextPostType, isEventContext) {
 /**
  * Render a loading state component.
  *
- * @param {string} message - Loading message.
+ * @param {Object} props         - Component props.
+ * @param {string} props.message - Loading message.
  * @return {Element} Loading component.
  */
 function LoadingState({
@@ -364,8 +396,9 @@ function LoadingState({
 /**
  * Render an empty state component.
  *
- * @param {string}  message - Empty state message.
- * @param {Element} action  - Optional action button.
+ * @param {Object}  props         - Component props.
+ * @param {string}  props.message - Empty state message.
+ * @param {Element} props.action  - Optional action button.
  * @return {Element} Empty state component.
  */
 function EmptyState({
@@ -383,7 +416,8 @@ function EmptyState({
 /**
  * Render a sync notice component.
  *
- * @param {string} message - Notice message.
+ * @param {Object} props         - Component props.
+ * @param {string} props.message - Notice message.
  * @return {Element} Notice component.
  */
 function SyncNotice({
@@ -398,9 +432,10 @@ function SyncNotice({
 /**
  * Render an event indicator badge.
  *
- * @param {string} emoji   - Badge emoji.
- * @param {string} message - Badge message.
- * @param {string} variant - Badge variant class.
+ * @param {Object} props         - Component props.
+ * @param {string} props.emoji   - Badge emoji.
+ * @param {string} props.message - Badge message.
+ * @param {string} props.variant - Badge variant class.
  * @return {Element} Badge component.
  */
 function EventIndicator({
@@ -456,7 +491,7 @@ function Edit({
     showMinutes,
     showSeconds
   } = attributes;
-  const segmentConfig = {
+  const segmentConfig = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useMemo)(() => ({
     showYears,
     showMonths,
     showWeeks,
@@ -464,9 +499,9 @@ function Edit({
     showHours,
     showMinutes,
     showSeconds
-  };
+  }), [showYears, showMonths, showWeeks, showDays, showHours, showMinutes, showSeconds]);
   const [timeLeft, setTimeLeft] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useState)(calculateTimeDifference(targetDateTime, segmentConfig));
-  const [openDropdown, setOpenDropdown] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useState)(null);
+  const [, setOpenDropdown] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useState)(null);
   const {
     updateBlockAttributes
   } = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_4__.useDispatch)('core/block-editor');
@@ -517,7 +552,7 @@ function Edit({
         });
       }
     }
-  }, [isEventContext, contextEventDate, targetDateTime, gatherPressEventId, gatherPressTermId]);
+  }, [setAttributes, isEventContext, contextEventDate, targetDateTime, gatherPressEventId, gatherPressTermId]);
 
   // Update target date when synced sources change
   (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useEffect)(() => {
@@ -527,7 +562,7 @@ function Edit({
         targetDateTime: eventDate
       });
     }
-  }, [nextEventFromTerm]);
+  }, [setAttributes, nextEventFromTerm, targetDateTime]);
   (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useEffect)(() => {
     const eventDate = selectedEvent?.meta?.gatherpress_datetime_start;
     if (eventDate && eventDate !== targetDateTime) {
@@ -535,7 +570,7 @@ function Edit({
         targetDateTime: eventDate
       });
     }
-  }, [selectedEvent]);
+  }, [setAttributes, targetDateTime, selectedEvent]);
 
   // Update countdown every second
   (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useEffect)(() => {
@@ -546,12 +581,15 @@ function Edit({
       setTimeLeft(calculateTimeDifference(targetDateTime, segmentConfig));
     }, 1000);
     return () => clearInterval(interval);
-  }, [targetDateTime, showYears, showMonths, showWeeks, showDays, showHours, showMinutes, showSeconds]);
+  }, [targetDateTime, segmentConfig]);
 
   // Auto-detect mode based on target date (only if autoMode is enabled and using manual date)
   (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useEffect)(() => {
     if (targetDateTime && autoMode && isManualDate) {
-      const newMode = timeLeft.total < 0 ? 'countup' : 'countdown';
+      let newMode = 'countdown';
+      if (timeLeft.total < 0) {
+        newMode = 'countup';
+      }
       if (newMode !== mode) {
         setAttributes({
           mode: newMode
@@ -564,7 +602,14 @@ function Edit({
   (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useEffect)(() => {
     if (targetDateTime && updateBlockAttributes) {
       const formattedDate = (0,_wordpress_date__WEBPACK_IMPORTED_MODULE_5__.dateI18n)(dateTimeFormat, targetDateTime);
-      const blockName = mode === 'countdown' ? (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Countdown to', 'gatherpress-countdown') + ' ' + formattedDate : (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Count up from', 'gatherpress-countdown') + ' ' + formattedDate;
+      let blockName = '';
+      if (mode === 'countdown') {
+        blockName = (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.sprintf)(/* translators: %s: target date */
+        (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Countdown to %s', 'gatherpress-countdown'), formattedDate);
+      } else {
+        blockName = (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.sprintf)(/* translators: %s: start date */
+        (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Count up from %s', 'gatherpress-countdown'), formattedDate);
+      }
       updateBlockAttributes(clientId, {
         metadata: {
           name: blockName
@@ -641,6 +686,30 @@ function Edit({
   };
 
   /**
+   * Handle manual date/time change from DateTimePicker.
+   *
+   * @param {string} newDateTime - New date time value.
+   */
+  const handleDateTimeChange = newDateTime => {
+    // Ensure the date is stored with full precision
+    if (newDateTime) {
+      // Parse the date to ensure it's valid
+      const date = new Date(newDateTime);
+      if (!isNaN(date.getTime())) {
+        // Store as ISO string with full precision
+        const isoString = date.toISOString();
+        setAttributes({
+          targetDateTime: isoString,
+          gatherPressEventId: 0,
+          gatherPressTaxonomy: '',
+          gatherPressTermId: 0
+        });
+        setOpenDropdown(null);
+      }
+    }
+  };
+
+  /**
    * Render event selector dropdown content.
    *
    * @return {Element} Dropdown content.
@@ -648,13 +717,18 @@ function Edit({
   const renderEventSelector = () => {
     if (isLoadingEvents) {
       return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(LoadingState, {
-        message: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Loading events...', 'gatherpress-countdown')
+        message: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Loading events…', 'gatherpress-countdown')
       });
     }
     if (events.length === 0) {
       return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(EmptyState, {
         message: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('No GatherPress events found.', 'gatherpress-countdown')
       });
+    }
+    let syncedMessage = '';
+    if (gatherPressEventId > 0 && selectedEvent) {
+      syncedMessage = (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.sprintf)(/* translators: %s: event title */
+      (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Synced with event: %s', 'gatherpress-countdown'), selectedEvent.title.rendered);
     }
     return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.Fragment, {
       children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.RadioControl, {
@@ -677,7 +751,7 @@ function Edit({
         onChange: handleEventChange,
         options: eventOptions,
         allowReset: true,
-        help: gatherPressEventId > 0 && selectedEvent ? (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Synced with event: ', 'gatherpress-countdown') + selectedEvent.title.rendered : ''
+        help: syncedMessage
       }), gatherPressEventId > 0 && eventMode === 'countdown' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.ToggleControl, {
         label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Automatic mode switching', 'gatherpress-countdown'),
         checked: autoMode,
@@ -697,7 +771,7 @@ function Edit({
   const renderTaxonomySelector = () => {
     if (isLoadingTaxonomies) {
       return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(LoadingState, {
-        message: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Loading taxonomies...', 'gatherpress-countdown')
+        message: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Loading taxonomies…', 'gatherpress-countdown')
       });
     }
     if (taxonomies.length === 0) {
@@ -709,7 +783,7 @@ function Edit({
       return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.Fragment, {
         children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("p", {
           className: "gatherpress-countdown-taxonomy-label",
-          children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select a taxonomy:', 'gatherpress-countdown')
+          children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select an event taxonomy:', 'gatherpress-countdown')
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.MenuGroup, {
           children: taxonomies.map(tax => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.MenuItem, {
             onClick: () => setAttributes({
@@ -733,7 +807,7 @@ function Edit({
   const renderTermSelector = () => {
     if (isLoadingTerms) {
       return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(LoadingState, {
-        message: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Loading terms...', 'gatherpress-countdown')
+        message: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Loading terms…', 'gatherpress-countdown')
       });
     }
     if (terms.length === 0) {
@@ -749,6 +823,18 @@ function Edit({
         })
       });
     }
+    let eventModeMessage = '';
+    if (taxonomyMode === 'countdown') {
+      eventModeMessage = (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Using next event:', 'gatherpress-countdown');
+    } else {
+      eventModeMessage = (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Using last event:', 'gatherpress-countdown');
+    }
+    let syncMessage = '';
+    if (gatherPressTermId > 0 && nextEventFromTerm) {
+      syncMessage = (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.sprintf)(/* translators: 1: mode message, 2: event title */
+      (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('%1$s %2$s', 'gatherpress-countdown'), eventModeMessage, nextEventFromTerm.title.rendered);
+    }
+    const currentTaxonomy = taxonomies.find(t => t.slug === gatherPressTaxonomy);
     return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.Fragment, {
       children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxs)("div", {
         className: "gatherpress-countdown-taxonomy-header",
@@ -764,7 +850,7 @@ function Edit({
           label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Back', 'gatherpress-countdown')
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("span", {
           className: "gatherpress-countdown-taxonomy-name",
-          children: taxonomies.find(t => t.slug === gatherPressTaxonomy)?.name
+          children: currentTaxonomy ? currentTaxonomy.name : ''
         })]
       }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.RadioControl, {
         label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Display mode', 'gatherpress-countdown'),
@@ -786,12 +872,12 @@ function Edit({
         onChange: handleTermChange,
         options: termOptions,
         allowReset: true
-      }), gatherPressTermId > 0 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.Fragment, {
-        children: isLoadingNextEvent ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(LoadingState, {
-          message: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Finding next event...', 'gatherpress-countdown')
-        }) : nextEventFromTerm ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.Fragment, {
+      }), gatherPressTermId > 0 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.Fragment, {
+        children: [isLoadingNextEvent ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(LoadingState, {
+          message: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Finding next event…', 'gatherpress-countdown')
+        }) : null, !isLoadingNextEvent && nextEventFromTerm ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.Fragment, {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(SyncNotice, {
-            message: taxonomyMode === 'countdown' ? (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Using next event: ', 'gatherpress-countdown') + nextEventFromTerm.title.rendered : (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Using last event: ', 'gatherpress-countdown') + nextEventFromTerm.title.rendered
+            message: syncMessage
           }), taxonomyMode === 'countdown' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.ToggleControl, {
             label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Automatic mode switching', 'gatherpress-countdown'),
             checked: autoMode,
@@ -800,13 +886,13 @@ function Edit({
             }),
             help: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Automatically switch from countdown to count-up when the event date is reached.', 'gatherpress-countdown')
           })]
-        }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.Notice, {
+        }) : null, !isLoadingNextEvent && !nextEventFromTerm ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.Notice, {
           status: "warning",
           isDismissible: false,
           children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("p", {
             children: taxonomyMode === 'countdown' ? (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('No upcoming events found in this term.', 'gatherpress-countdown') : (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('No past events found in this term.', 'gatherpress-countdown')
           })
-        })
+        }) : null]
       })]
     });
   };
@@ -832,15 +918,7 @@ function Edit({
           renderContent: () => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.Fragment, {
             children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.DateTimePicker, {
               currentDate: targetDateTime || null,
-              onChange: newDateTime => {
-                setAttributes({
-                  targetDateTime: newDateTime,
-                  gatherPressEventId: 0,
-                  gatherPressTaxonomy: '',
-                  gatherPressTermId: 0
-                });
-                setOpenDropdown(null);
-              },
+              onChange: handleDateTimeChange,
               is12Hour: false
             }), targetDateTime && isManualDate && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("div", {
               style: {
@@ -864,7 +942,7 @@ function Edit({
             isOpen,
             onToggle
           }) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.ToolbarButton, {
-            icon: "awards",
+            icon: "nametag",
             label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select GatherPress event', 'gatherpress-countdown'),
             onClick: () => {
               setOpenDropdown(isOpen ? null : 'event');
@@ -885,7 +963,7 @@ function Edit({
             onToggle
           }) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.ToolbarButton, {
             icon: "tag",
-            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select from taxonomy', 'gatherpress-countdown'),
+            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select from GatherPress taxonomy', 'gatherpress-countdown'),
             onClick: () => {
               setOpenDropdown(isOpen ? null : 'taxonomy');
               onToggle();
@@ -915,9 +993,10 @@ function Edit({
         initialOpen: false,
         children: [SEGMENT_ORDER.map(segment => {
           const attrKey = `show${segment.charAt(0).toUpperCase() + segment.slice(1)}`;
-          const label = segment.charAt(0).toUpperCase() + segment.slice(1);
+          const capitalizedSegment = segment.charAt(0).toUpperCase() + segment.slice(1);
           return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.ToggleControl, {
-            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)(`Show ${segment}`, 'gatherpress-countdown'),
+            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.sprintf)(/* translators: %s: time segment name */
+            (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Show %s', 'gatherpress-countdown'), capitalizedSegment),
             checked: attributes[attrKey],
             onChange: value => setAttributes({
               [attrKey]: value
@@ -942,21 +1021,23 @@ function Edit({
         variant: "gatherpress-countdown-context-indicator"
       }), isSyncedEvent && selectedEvent && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(EventIndicator, {
         emoji: "\uD83C\uDF9F\uFE0F",
-        message: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Synced with event: ', 'gatherpress-countdown') + selectedEvent.title.rendered
+        message: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.sprintf)(/* translators: %s: event title */
+        (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Synced with event: %s', 'gatherpress-countdown'), selectedEvent.title.rendered)
       }), isSyncedTerm && nextEventFromTerm && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)(EventIndicator, {
         emoji: "\uD83C\uDFF7\uFE0F",
-        message: taxonomyMode === 'countdown' ? (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Using next event: ', 'gatherpress-countdown') + nextEventFromTerm.title.rendered : (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Using last event: ', 'gatherpress-countdown') + nextEventFromTerm.title.rendered
+        message: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.sprintf)(/* translators: 1: mode message, 2: event title */
+        (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('%1$s %2$s', 'gatherpress-countdown'), taxonomyMode === 'countdown' ? (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Using next event:', 'gatherpress-countdown') : (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Using last event:', 'gatherpress-countdown'), nextEventFromTerm.title.rendered)
       }), !targetDateTime ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("div", {
         className: "gatherpress-countdown__placeholder",
         children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("p", {
           children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select a date and time using the toolbar buttons above.', 'gatherpress-countdown')
         })
-      }) : segments.length === 0 ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("div", {
+      }) : null, targetDateTime && segments.length === 0 ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("div", {
         className: "gatherpress-countdown__placeholder",
         children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("p", {
           children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Please select at least one time segment to display.', 'gatherpress-countdown')
         })
-      }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("div", {
+      }) : null, targetDateTime && segments.length > 0 ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("div", {
         className: "gatherpress-countdown",
         "data-mode": mode,
         children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_8__.jsx)("div", {
@@ -972,7 +1053,7 @@ function Edit({
             })]
           }, index))
         })
-      })]
+      }) : null]
     })]
   });
 }
@@ -1298,7 +1379,7 @@ module.exports = window["ReactJSXRuntime"];
 /******/ 			return __webpack_require__.O(result);
 /******/ 		}
 /******/ 		
-/******/ 		var chunkLoadingGlobal = globalThis["webpackChunkblock_gatherpress_countdown"] = globalThis["webpackChunkblock_gatherpress_countdown"] || [];
+/******/ 		var chunkLoadingGlobal = globalThis["webpackChunkgatherpress_countdown"] = globalThis["webpackChunkgatherpress_countdown"] || [];
 /******/ 		chunkLoadingGlobal.forEach(webpackJsonpCallback.bind(null, 0));
 /******/ 		chunkLoadingGlobal.push = webpackJsonpCallback.bind(null, chunkLoadingGlobal.push.bind(chunkLoadingGlobal));
 /******/ 	})();

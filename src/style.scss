@@ -3,16 +3,12 @@
  * Applied to both editor and frontend.
  */
 
-// Block
-.wp-block-gatherpress-countdown {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	min-height: 120px;
-}
-
 // Elements
 .gatherpress-countdown {
+	// Enable GPU acceleration
+	transform: translateZ(0);
+	backface-visibility: hidden;
+
 	&__display {
 		display: flex;
 		gap: 2rem;
@@ -33,6 +29,8 @@
 		font-weight: 700;
 		line-height: 1;
 		font-variant-numeric: tabular-nums;
+		// Hint to browser about upcoming changes
+		will-change: contents;
 	}
 
 	&__label {
@@ -41,6 +39,8 @@
 		letter-spacing: 0.05em;
 		opacity: 0.7;
 		font-weight: 500;
+		// Hint to browser about upcoming changes
+		will-change: contents;
 	}
 
 	&__placeholder {
@@ -90,8 +90,14 @@
 
 // Block Style Modifiers
 .wp-block-gatherpress-countdown {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 120px;
+
 	// Classic Style
 	&.is-style-classic {
+
 		.gatherpress-countdown__display {
 			gap: 1.5rem;
 		}
@@ -117,6 +123,7 @@
 
 	// Modern Style
 	&.is-style-modern {
+
 		.gatherpress-countdown__display {
 			gap: 2.5rem;
 			padding: 2rem;
@@ -125,9 +132,9 @@
 		.gatherpress-countdown__segment {
 			position: relative;
 			padding: 1rem;
-			
+
 			&::after {
-				content: ':';
+				content: ":";
 				position: absolute;
 				right: -1.5rem;
 				top: 50%;
@@ -145,7 +152,7 @@
 		.gatherpress-countdown__number {
 			font-size: 4rem;
 			font-weight: 300;
-			background: linear-gradient(135deg, currentColor 0%, currentColor 100%);
+			background: linear-gradient(135deg, currentcolor 0%, currentcolor 100%);
 			-webkit-background-clip: text;
 			-webkit-text-fill-color: transparent;
 			background-clip: text;
@@ -177,7 +184,7 @@
 			gap: 0.25em;
 
 			&:not(:last-child)::after {
-				content: ',';
+				content: ",";
 				margin-left: 0;
 				opacity: 0.7;
 			}
@@ -202,6 +209,7 @@
 
 	// Bold Style
 	&.is-style-bold {
+
 		.gatherpress-countdown__display {
 			gap: 1rem;
 			background: rgba(0, 0, 0, 0.8);
@@ -221,7 +229,7 @@
 		.gatherpress-countdown__number {
 			font-size: 3.5rem;
 			font-weight: 900;
-			color: #ffffff;
+			color: #fff;
 			text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 		}
 
@@ -236,6 +244,7 @@
 
 // Responsive Design
 @media (max-width: 768px) {
+
 	.gatherpress-countdown__display {
 		gap: 1rem !important;
 	}
@@ -259,6 +268,7 @@
 
 	// Preserve minimal style inline layout
 	.wp-block-gatherpress-countdown.is-style-minimal {
+
 		.gatherpress-countdown__number,
 		.gatherpress-countdown__label {
 			font-size: inherit !important;
@@ -267,6 +277,7 @@
 }
 
 @media (max-width: 480px) {
+
 	.gatherpress-countdown__display {
 		gap: 0.75rem !important;
 	}
@@ -281,6 +292,7 @@
 	}
 
 	.wp-block-gatherpress-countdown.is-style-minimal {
+
 		.gatherpress-countdown__display {
 			gap: 0.5em !important;
 		}
@@ -294,5 +306,14 @@
 			min-width: auto !important;
 			padding: 0 !important;
 		}
+	}
+}
+
+// Reduce motion for accessibility
+@media (prefers-reduced-motion: reduce) {
+
+	.gatherpress-countdown__number,
+	.gatherpress-countdown__label {
+		will-change: auto !important;
 	}
 }

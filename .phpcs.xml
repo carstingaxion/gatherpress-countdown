@@ -5,6 +5,9 @@
 	<file>.</file>
 	<arg name="basepath" value="./"/><!-- Strip the file paths down to the relevant bit -->
 
+	<exclude-pattern>*/build/*</exclude-pattern>
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	
 	<!-- Rules: figuren.theater Coding Standards -->
 	<rule ref="figurentheater" />
 
@@ -13,6 +16,7 @@
 		<properties>
 			<property name="text_domain" type="array">
 				<element value="gatherpress-countdown"/>
+				<element value="default"/>
 			</property>
 		</properties>
 	</rule>

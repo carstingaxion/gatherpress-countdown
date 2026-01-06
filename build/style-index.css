@@ -5,11 +5,9 @@
  * Frontend styles using BEM methodology.
  * Applied to both editor and frontend.
  */
-.wp-block-gatherpress-countdown {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 120px;
+.gatherpress-countdown {
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 .gatherpress-countdown__display {
   display: flex;
@@ -29,6 +27,7 @@
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  will-change: contents;
 }
 .gatherpress-countdown__label {
   font-size: 0.875rem;
@@ -36,6 +35,7 @@
   letter-spacing: 0.05em;
   opacity: 0.7;
   font-weight: 500;
+  will-change: contents;
 }
 .gatherpress-countdown__placeholder {
   text-align: center;
@@ -73,6 +73,12 @@
   padding: 0;
   position: absolute;
   word-wrap: normal !important;
+}
+.wp-block-gatherpress-countdown {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 120px;
 }
 .wp-block-gatherpress-countdown.is-style-classic .gatherpress-countdown__display {
   gap: 1.5rem;
@@ -116,7 +122,7 @@
 .wp-block-gatherpress-countdown.is-style-modern .gatherpress-countdown__number {
   font-size: 4rem;
   font-weight: 300;
-  background: linear-gradient(135deg, currentColor 0%, currentColor 100%);
+  background: linear-gradient(135deg, currentcolor 0%, currentcolor 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -178,7 +184,7 @@
 .wp-block-gatherpress-countdown.is-style-bold .gatherpress-countdown__number {
   font-size: 3.5rem;
   font-weight: 900;
-  color: #ffffff;
+  color: #fff;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 .wp-block-gatherpress-countdown.is-style-bold .gatherpress-countdown__label {
@@ -230,6 +236,12 @@
   .wp-block-gatherpress-countdown.is-style-minimal .gatherpress-countdown__segment {
     min-width: auto !important;
     padding: 0 !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gatherpress-countdown__number,
+  .gatherpress-countdown__label {
+    will-change: auto !important;
   }
 }
 
